@@ -1,0 +1,45 @@
+{
+  "name": "Simple TV",
+  "short_name": "SPTV",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#212529",
+  "theme_color": "#212529",
+  "orientation": "landscape-primary",
+  "icons": [{
+      "src": "img/ico/icon-16x16.png",
+      "type": "image/png",
+      "sizes": "16x16"
+    },
+    {
+      "src": "img/ico/icon-24x24.png",
+      "type": "image/png",
+      "sizes": "24x24"
+    },
+    {
+      "src": "img/ico/icon-32x32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    },
+    {
+      "src": "img/ico/icon-64x64.png",
+      "type": "image/png",
+      "sizes": "64x64"
+    },
+    {
+      "src": "img/ico/icon-128x128.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "img/ico/icon-256x256.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "img/ico/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

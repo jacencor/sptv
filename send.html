@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Shaka sptv">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <link rel="stylesheet" type="text/css" href="css/send.css" />
+    <script defer type="text/javascript" language="javascript" src="js/send.js"></script>
+    <title>Contacto SPTV</title>
+</head>
+
+<body>
+    <div class="center">
+        <h1>Pídeselo al Admin</h1>
+        <form action="https://api.web3forms.com/submit" method="POST" id="form">
+            <input type="hidden" id="access" name="access_key" value="" />
+            <input type="hidden" name="subject" value="Contacto desde sptv.netlify.app" />
+            <input type="checkbox" name="botcheck" id="" style="display: none;" />
+
+            <div class="txt_field">
+                <input type="text" name="name" id="name" value="" required />
+                <span></span>
+                <label for="name">Nombre</label>
+            </div>
+            <div class="txt_field">
+                <input type="email" name="email" id="email" required />
+                <span></span>
+                <label for="email">Correo</label>
+            </div>
+            <div class="txt_field">
+                <input type="text" name="message" id="message" value="" required />
+                <span></span>
+                <label for="message">Mensaje</label>
+            </div>
+            <input type="submit" value="Enviar mensaje">
+            <div class="homePage_link">
+                <span id="result"></span>
+                <a href="index.html">Regresar</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
