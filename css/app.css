@@ -60,7 +60,7 @@ main {
 nav {
     grid-area: nav;
     display: block;
-    overflow: hidden;
+    overflow: auto;
     background: var(--bd-pre-bg);
 }
 
@@ -249,9 +249,9 @@ footer p {
 }
 
 .toggleList {
-    overflow: auto;
-    height: 100%;
-    visibility: visible;
+    /*overflow: hidden;
+    /*height: 100%;
+    visibility: visible;*/
     margin: var(--main-margin);
 }
 

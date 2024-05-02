@@ -89,7 +89,7 @@ function playIframe(play) {
     LOG("Play iframe: " + currentChannel.tipo);
     if (currentChannel.tipo == "IFRAME") {
         iFrameElement.sandbox = "allow-same-origin allow-scripts allow-presentation";
-        iFrameElement.contentWindow.console.log = function () { };
+        iFrameElement.contentWindow.console.log = function () {};
         iFrameElement.src = currentChannel.source;
     } else {
         let src = "shaka.html"
@@ -139,6 +139,7 @@ document.addEventListener("keydown", (event) => {
  *** Carga
  */
 window.addEventListener("load", () => {
+    //tvSet();
     for (const [i, val] of tv.entries()) {
         tv[i].source = atob(val.source);
         tv[i].key = val.key ? atob(val.key) : null;
@@ -146,6 +147,7 @@ window.addEventListener("load", () => {
         tv[i].tipo = atob(val.tipo);
         tv[i].name = atob(val.name);
     }
+    console.log(tv);
     makeListTV();
     document.getElementById("loader").classList.toggle("none");
     document.getElementById('focusEnd').addEventListener('focus', () => {
@@ -160,6 +162,27 @@ window.addEventListener("load", () => {
     });
 });
 
+/**
+ *  Genrerar lista tv
+ */
+function tvSet() {
+    for (const [i, channel] of tv.entries()) {
+        let item = {
+            source: null,
+            key: null,
+            poster: null,
+            tipo: null,
+            name: null,
+        }
+        item.source = channel.source != null ? btoa(channel.source) : null;
+        item.key = channel.key != null ? btoa(channel.key) : null;
+        item.poster = channel.poster != null ? btoa(channel.poster) : null;
+        item.tipo = channel.tipo != null ? btoa(channel.tipo) : null;
+        item.name = channel.name != null ? btoa(channel.name) : null;
+        tv[i] = item;
+    }
+    console.log(tv);
+}
 /*
  *** PWA - OK
  *** Ejecución del serviceWorker 

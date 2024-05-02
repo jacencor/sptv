@@ -1,7 +1,7 @@
 /*
  ***
  *** Enviar mensaje de contacto
- *** @jacencor
+ *** Serie: bWFpbC50bTpzeGFzZG9zam5Ad2lyZWNvbm5lY3RlZC5jb206OGQwNyFUUiw=
  ***
  */
 const form = document.getElementById("form");
@@ -21,13 +21,13 @@ form.addEventListener("submit", function (e) {
     result.innerHTML = "Paciencia...";
 
     fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json"
-        },
-        body: json
-    })
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json"
+            },
+            body: json
+        })
         .then(async (response) => {
             let json = await response.json();
             if (response.status == 200) {
