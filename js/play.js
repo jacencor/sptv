@@ -42,7 +42,7 @@ async function init() {
         castAndroidReceiverCompatible: true,
         addSeekBar: false,
         controlPanelElements: ["play_pause", "volume", "fullscreen", "overflow_menu"],
-        overflowMenuButtons: ["cast", "airplay", "quality", "language",]
+        overflowMenuButtons: ["cast", "airplay", "quality", "language", ]
     }
 
     ui.configure(config);
@@ -87,7 +87,9 @@ async function init() {
 
         controls.addEventListener('caststatuschanged', onCastStatusChanged);
         player.addEventListener('error', handleError);
-        await player.load(url);
+        await player.load(url).then(() => {
+            player.play();
+        });
 
         LOG("Cargado");
     } catch (error) {
