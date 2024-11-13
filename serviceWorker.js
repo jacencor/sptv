@@ -18,13 +18,6 @@ const stc = [
     //images
     "/img/app/error.png",
     "/img/app/poster.jpg",
-    //shaka
-    "/js/node_modules/eme-encryption-scheme-polyfill/index.js",
-    "/js/shaka/shaka-player.ui.min.js",
-    "/js/shaka/shaka-player.ui.map",
-    "/js/shaka/controls.css",
-    "/js/shaka/controls.css.map",
-    "/js/mux/mux.min.js",
 ];
 //Recursos variables
 const chg = [
@@ -32,20 +25,26 @@ const chg = [
     "/shaka.html",
     "/js/app.js",
     "/js/play.js",
-    "/js/cmm.js",
+    "/js/cmmApp.js",
     "/css/app.css",
     "/css/player.css",
     "/manifest.json",
 ];
 //Recursos externos
 const net = [
-    "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js",
+    //shaka
+    "https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.16/controls.min.css",
+    "https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.16/shaka-player.ui.min.js",
+    //mux
+    "https://cdnjs.cloudflare.com/ajax/libs/mux.js/7.0.3/mux.min.js",
+    //cast
     "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1",
     "//www.gstatic.com/eureka/clank/cast_sender.js",
     "//www.gstatic.com/eureka/clank/112/cast_sender.js",
     "//www.gstatic.com/eureka/clank/113/cast_sender.js",
     "http://www.gstatic.com/cast/sdk/libs/sender/1.0/cast_framework.js",
     //imagenes
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/América_Televisión.svg/471px-América_Televisión.svg.png",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Ecuavisa_Logo_2019.png/640px-Ecuavisa_Logo_2019.png",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Teleamazonas_Logo.png/640px-Teleamazonas_Logo.png",
     "https://upload.wikimedia.org/wikipedia/commons/1/13/Rts_logo.png",
@@ -161,7 +160,9 @@ self.addEventListener("fetch", (fetchEvent) => {
 
             // Actualizar recursos externos desde el servidor
             const networkResponse = await fetch(fetchEvent.request.url, {
-                mode: "no-cors",
+                //mode: "no-cors",
+                referrer: "",
+                referrerPolicy: "no-referrer"
             });
 
             fetchEvent.waitUntil(

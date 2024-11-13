@@ -88,7 +88,7 @@ async function init() {
         controls.addEventListener('caststatuschanged', onCastStatusChanged);
         player.addEventListener('error', handleError);
         await player.load(url).then(() => {
-            player.play();
+            //player.play();
         });
 
         LOG("Cargado");
