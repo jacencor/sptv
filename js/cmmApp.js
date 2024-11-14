@@ -14,7 +14,8 @@
  *   IFRAME: Funciona con su propio player dentro de un IFRAME
  *
  */
-const tv = [{
+const tv = [
+    {
         "source": "aHR0cHM6Ly9hbGJhLWVjLXJ0cy1ydHMuc3RyZWFtLm1lZGlhdGlxdWVzdHJlYW0uY29tL2luZGV4Lm0zdTg=",
         "key": null,
         "poster": "aHR0cHM6Ly91cGxvYWQud2lraW1lZGlhLm9yZy93aWtpcGVkaWEvY29tbW9ucy8xLzEzL1J0c19sb2dvLnBuZw==",
@@ -28,20 +29,20 @@ const tv = [{
         "tipo": "T1BFTg==",
         "name": "RWN1YXZpc2E="
     },
-    /*{
-        "source": "aHR0cHM6Ly90ZWxlYW1hem9uYXMtbGl2ZS5jZG4udnVzdHJlYW1zLmNvbS9saXZlLzQzOTUzY2FhLTUzZmYtNDUyNS05ZjllLTIwMmExMmJmMjY0ZS9saXZlLmlzbWwvNDM5NTNjYWEtNTNmZi00NTI1LTlmOWUtMjAyYTEyYmYyNjRlLm0zdTggICAgICAgIA==",
+    {
+        "source": "aHR0cHM6Ly90ZWxlYW1hem9uYXMtbGl2ZS5jZG4udnVzdHJlYW1zLmNvbS9saXZlL2ZkNGFiMzQ2LWI0ZTMtNDYyOC1hYmYwLWI1YTFiYzE5MjQyOC9saXZlLmlzbWwvZmQ0YWIzNDYtYjRlMy00NjI4LWFiZjAtYjVhMWJjMTkyNDI4Lm0zdTg=",
         "key": null,
         "poster": "aHR0cHM6Ly91cGxvYWQud2lraW1lZGlhLm9yZy93aWtpcGVkaWEvY29tbW9ucy90aHVtYi9lL2UwL1RlbGVhbWF6b25hc19Mb2dvLnBuZy82NDBweC1UZWxlYW1hem9uYXNfTG9nby5wbmc=",
         "tipo": "T1BFTg==",
         "name": "VGVsZWFtYXpvbmFz"
     },
     {
-        "source": "aHR0cHM6Ly9zdHJlYW0tcHVsbC1iLnlvbG9saXYuY29tL3lvbG9saXYvMTE0NDI3ODM2ODU0NDM1ODQwMV95bzcyMHAzMGYubTN1OA==",
+        "source": "aHR0cHM6Ly9zdHJlYW0ub3JvbWFyLnR2L2hscy9vcm9tYXJ0dl9oaS9pbmRleC5tM3U4",
         "key": null,
-        "poster": "aHR0cHM6Ly91cGxvYWQud2lraW1lZGlhLm9yZy93aWtpcGVkaWEvY29tbW9ucy85Lzk0L0dhbWF2aXNp824yMDE4bmV3LnBuZw==",
+        "poster": "aHR0cHM6Ly91cGxvYWQud2lraW1lZGlhLm9yZy93aWtpcGVkaWEvY29tbW9ucy8yLzIxL09yb21hcl9sb2dvLnBuZw==",
         "tipo": "T1BFTg==",
-        "name": "R2FtYXZpc2nzbg=="
-    },*/
+        "name": "T3JvbWFy"
+    },
     {
         "source": "aHR0cHM6Ly92aWRlbzEubWFrcm9kaWdpdGFsLmNvbS9ydHUvcnR1L3BsYXlsaXN0Lm0zdTg=",
         "key": null,
@@ -68,7 +69,7 @@ const tv = [{
         "key": null,
         "poster": "aHR0cHM6Ly91cGxvYWQud2lraW1lZGlhLm9yZy93aWtpcGVkaWEvY29tbW9ucy90aHVtYi80LzRjL0Ft6XJpY2FfVGVsZXZpc2nzbi5zdmcvNDcxcHgtQW3pcmljYV9UZWxldmlzafNuLnN2Zy5wbmc=",
         "tipo": "T1BFTg==",
-        "name": "QW1lcmljYSBUVg"
+        "name": "QW1lcmljYSBUVg=="
     },
     {
         "source": "aHR0cHM6Ly9kd2FtZHN0cmVhbTEwNC5ha2FtYWl6ZWQubmV0L2hscy9saXZlLzIwMTU1MzAvZHdzdHJlYW0xMDQvaW5kZXgubTN1OA==",
