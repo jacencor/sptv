@@ -38,7 +38,7 @@ function makeListTV() {
             listChannel.appendChild(channel);
         }
     }
-    playIframe(channel);
+    playIframe(0);
 }
 
 // Play recurso
@@ -51,7 +51,7 @@ function playIframe(play) {
 
     iframe.id = "iPlayer";
     iframe.title = "Video Player";
-    iframe.scrolling = "no";
+    iframe.sandbox = "allow-same-origin allow-scripts allow-presentation";
     iframe.allow = "encrypted-media; autoplay; fullscreen; accelerometer 'none'; gyroscope 'none'; clipboard-write 'none'; camera 'none'; microphone 'none'; geolocation 'none'; payment 'none'";
     iframe.allowFullscreen = "true";
     iframe.allowtransparency = "false";
@@ -70,29 +70,82 @@ function playIframe(play) {
         iframe.src = item.source;
     } else {
         let src = "shaka.html"
-        src += "?tipo=" + item.tipo;
-        src += "&img=" + item.poster;
+        src += "?tipo=" + item.type;
+        src += "&img=" + item.img;
         src += "&url=" + item.source;
         if (item.tipo === "OPEN-DRM") {
             src += "&k1=" + item.key.replace(":", "&k2=");
         }
         iframe.src = src;
     }
-}
 
-window.addEventListener("load", () => {
-    console.log(tv);
-    makeListTV();
-});
+
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        let source = item.source.split('/');
+        let url = source.slice(0, -1).join('/');
+        navigator.serviceWorker.controller.postMessage({
+            type: 'ITEM',
+            datos: {
+                url: url+'/',
+            }
+        });
+    }
+
+    closeNav();
+}
 
 async function cargarJSON() {
-  try {
-    const response = await fetch('data/channels.json');
-    const data = await response.json();
-    console.log('Datos cargados:', data);
-    tv = data;
-  } catch (error) {
-    console.error('Error al cargar el JSON:', error);
-  }
+    try {
+        const response = await fetch('data/channels.json');
+        const data = await response.json();
+        console.log('Datos cargados:', data);
+        tv = data;
+    } catch (error) {
+        console.error('Error al cargar el JSON:', error);
+    }
 }
 
+/*
+ * ORDEN: CACHE > INTERNET
+ */
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", async () => {
+        console.log("[Service Worker] Carga");
+        const registration = await navigator.serviceWorker
+            .register("/serviceWorker.js")
+            .then((res) => {
+                console.log("[Service Worker] Registrado :P");
+                return res;
+            })
+            .catch(err => () => {
+                console.log("[Service Worker] No Registrado: F");
+                console.log(err);
+            });
+        // por si acaso se perdio la deteccion del update... reenviar el SkIP
+        if (registration.waiting) {
+            console.log("[Service Worker] Saltar espera");
+            registration.waiting.postMessage("SKIP_WAITING");
+        }
+        // Detectar el update y esprar instalar
+        registration.addEventListener("updatefound", () => {
+            console.log("[Service Worker] Actualización");
+            if (registration.installing) {
+                //esperar a que el nuevo serviceworker.js entre a camellar
+                registration.installing.addEventListener("statechange", () => {
+                    if (registration.waiting) {
+                        if (navigator.serviceWorker.controller) {
+                            console.log("[Service Worker] Saltar espera");
+                            registration.waiting.postMessage("SKIP_WAITING");
+                        } else {
+                            // primera instalaciín siga
+                            console.log("[Service Worker] Registrado por primera vez :P")
+                        }
+                    }
+                });
+            }
+        });
+
+        console.log(tv);
+        makeListTV();
+    });
+}

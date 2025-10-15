@@ -1,25 +1,21 @@
 /*
-***
-*** PLAYER TV CSS
-*** @jacencor
-*** 
+** Estilo player
 */
 
-/* ROOT FONT STYLES */
 * {
-    font-family: monospace, system-ui, sans-serif;
+    font-family: "Lato", sans-serif;
 }
 
 :root {
     --main-pading: 0.25rem;
     --body-pading: 1rem;
-    --bs-body-bg: #212529;
-    --bs-border-color: #495057;
+    --bs-body-bg: #495057;
+    --bs-border-color: #212529;
 }
 
 /* BODY */
 body {
-    background: var(--bs-body-bg);
+    background:white;
     margin: 0;
     overflow: hidden;
 }

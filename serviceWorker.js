@@ -63,6 +63,8 @@ const cacheChg = "app-sTV-chg-" + version;
 const cacheStc = "app-sTV-stc-" + version;
 const cacheNet = "app-sTV-net-" + version;
 
+let source = "";
+
 // Permitir usar nuevo serviceWorker
 self.addEventListener('message', (event) => {
     if (event.data === 'SKIP_WAITING') {
@@ -88,18 +90,18 @@ self.addEventListener("activate", async (activateEvent) => {
     console.log("[Service Worker] Activate...");
     activateEvent.waitUntil(
         caches.keys()
-        .then(function (cacheNames) {
-            return Promise.all(
-                cacheNames.map(function (cache) {
-                    if (cache !== cacheChg &&
-                        cache !== cacheStc &&
-                        cache !== cacheNet) {
-                        console.log("[Service Cache] Eliminando caché antigua");
-                        return caches.delete(cache);
-                    }
-                })
-            );
-        })
+            .then(function (cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function (cache) {
+                        if (cache !== cacheChg &&
+                            cache !== cacheStc &&
+                            cache !== cacheNet) {
+                            console.log("[Service Cache] Eliminando caché antigua");
+                            return caches.delete(cache);
+                        }
+                    })
+                );
+            })
     );
 
     //refrescar...
@@ -109,6 +111,14 @@ self.addEventListener("activate", async (activateEvent) => {
     tabs.forEach((tab) => {
         tab.navigate(tab.url)
     })
+});
+
+// Recibir datos DE la página principal
+self.addEventListener('message', event => {
+    if (event.data.type === 'ITEM') {
+        console.log('Datos recibidos:', event.data.datos);
+        source = event.data.datos.url;
+    }
 });
 
 // Fetching contenido usando el Service Worker
@@ -126,7 +136,10 @@ self.addEventListener("fetch", (fetchEvent) => {
         if (cachedResponseChg) {
             console.log("[Service Cache] CHG: " + requestUrl);
             try {
-                const networkResponse = await fetch(fetchEvent.request);
+                const networkResponse = await fetch(fetchEvent.request.url, {
+                    referrer: "",
+                    referrerPolicy: "no-referrer"
+                });
                 const clonedResponse = networkResponse.clone();
 
                 cacheChgOpen.delete(fetchEvent.request);
@@ -160,7 +173,6 @@ self.addEventListener("fetch", (fetchEvent) => {
 
             // Actualizar recursos externos desde el servidor
             const networkResponse = await fetch(fetchEvent.request.url, {
-                //mode: "no-cors",
                 referrer: "",
                 referrerPolicy: "no-referrer"
             });
@@ -181,9 +193,21 @@ self.addEventListener("fetch", (fetchEvent) => {
             !requestUrl.includes(".mpd")) {
             console.log("[Service requestUrl]: " + requestUrl);
         }
-        // NO Chaging para recursos externos
-        const response = await fetch(fetchEvent.request);
-        //console.log("[Service Worker]  all: " + requestUrl);
-        return response;
+
+        try {
+            const response = await fetch(fetchEvent.request.url.replace('https://api.codetabs.com/v1/proxy/', source), {
+                referrer: "",
+                referrerPolicy: "no-referrer"
+            });
+            return response;
+        } catch (error) {
+            const response = await fetch('https://api.codetabs.com/v1/proxy?quest=' + fetchEvent.request.url.replace('https://api.codetabs.com/v1/proxy/', source), {
+                referrer: "",
+                referrerPolicy: "no-referrer"
+            });
+            return response;
+        }
+
+
     })());
 });

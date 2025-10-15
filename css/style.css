@@ -1,5 +1,13 @@
  body {
      font-family: "Lato", sans-serif;
+     margin: 0;
+     padding: 0;
+     overflow: hidden;
+     min-height: 100vh;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     background-color: #444;
  }
 
  .sidebar {
@@ -73,24 +81,19 @@
  }
 
  .container {
-     position: relative;
      width: 100%;
  }
 
  .container iframe {
-     display: flex;
-     width: 100%;
-     border: none;
+     width: 100vw;
      aspect-ratio: 16 / 9;
-     overflow: hidden;
+     border: none;
+     display: block;
  }
+
 
  .container .btn {
      position: absolute;
-     top: 5%;
-     left: 4%;
-     transform: translate(-50%, -50%);
-     -ms-transform: translate(-50%, -50%);
      background-color: #555;
      color: white;
      font-size: 16px;
@@ -99,6 +102,7 @@
      cursor: pointer;
      border-radius: 5px;
      text-align: center;
+     margin: 15px 10px;
  }
 
  .container .btn:hover {
