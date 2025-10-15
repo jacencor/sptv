@@ -51,7 +51,6 @@ function playIframe(play) {
 
     iframe.id = "iPlayer";
     iframe.title = "Video Player";
-    iframe.sandbox = "allow-same-origin allow-scripts allow-presentation";
     iframe.allow = "encrypted-media; autoplay; fullscreen; accelerometer 'none'; gyroscope 'none'; clipboard-write 'none'; camera 'none'; microphone 'none'; geolocation 'none'; payment 'none'";
     iframe.allowFullscreen = "true";
     iframe.allowtransparency = "false";
@@ -63,7 +62,7 @@ function playIframe(play) {
     main.innerHTML = "";
     main.appendChild(iframe);
 
-    console.log("Play iframe: " + item.tipo);
+    console.log("Play iframe: " + item.type);
     if (item.tipo == "IFRAME") {
         iframe.sandbox = "allow-same-origin allow-scripts allow-presentation";
         iframe.contentWindow.console.console.log = function () { };
