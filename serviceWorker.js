@@ -23,10 +23,10 @@ const stc = [
 const chg = [
     "/index.html",
     "/shaka.html",
-    "/js/app.js",
+    "/js/sptv.js",
     "/js/play.js",
-    "/js/cmmApp.js",
-    "/css/app.css",
+    "/data/channels.json",
+    "/css/style.css",
     "/css/player.css",
     "/manifest.json",
 ];
