@@ -58,7 +58,7 @@ const net = [
 ];
 
 //Versiones cache
-const version = "v2.1"
+const version = "v2.2"
 const cacheChg = "app-sTV-chg-" + version;
 const cacheStc = "app-sTV-stc-" + version;
 const cacheNet = "app-sTV-net-" + version;
