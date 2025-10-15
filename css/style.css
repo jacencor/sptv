@@ -1,3 +1,7 @@
+ /*
+* Estilo 
+*/
+
  body {
      font-family: "Lato", sans-serif;
      margin: 0;
@@ -44,20 +48,6 @@
      margin-left: 50px;
  }
 
- .openbtn {
-     font-size: 20px;
-     cursor: pointer;
-     background-color: #111;
-     color: white;
-     padding: 10px 15px;
-     border: none;
- }
-
- .openbtn:hover {
-     background-color: #444;
- }
-
-
  .sidebar .btn-group button {
      background-color: #111;
      border: none;
@@ -91,7 +81,6 @@
      display: block;
  }
 
-
  .container .btn {
      position: absolute;
      background-color: #555;
@@ -108,7 +97,6 @@
  .container .btn:hover {
      background-color: black;
  }
-
 
  @media screen and (max-height: 450px) {
      .sidebar {
