@@ -197,7 +197,8 @@ self.addEventListener("fetch", (fetchEvent) => {
         let url = fetchEvent.request.url;
         if (requestUrl.includes('https://sptv.netlify.app')) {
             url = url.replace('https://sptv.netlify.app/', source);
-        }else if (requestUrl.includes('https://api.codetabs.com/v1/proxy/')) {
+        }
+        if (requestUrl.includes('https://api.codetabs.com/v1/proxy/')) {
             url = url.replace('https://api.codetabs.com/v1/proxy/', source);
         }
 
