@@ -78,17 +78,14 @@ function playIframe(play) {
         iframe.src = src;
     }
 
-
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-        let source = item.source.split('/');
-        let url = source.slice(0, -1).join('/');
-        navigator.serviceWorker.controller.postMessage({
-            type: 'ITEM',
-            datos: {
-                url: url+'/',
-            }
-        });
-    }
+    let source = item.source.split('/');
+    let url = source.slice(0, -1).join('/');
+    navigator.serviceWorker.controller.postMessage({
+        type: 'ITEM',
+        datos: {
+            url: url+'/',
+        }
+    });
 
     closeNav();
 }
