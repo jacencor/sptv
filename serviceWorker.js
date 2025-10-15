@@ -194,20 +194,25 @@ self.addEventListener("fetch", (fetchEvent) => {
             console.log("[Service requestUrl]: " + requestUrl);
         }
 
+        let url = fetchEvent.request.url;
+        if (requestUrl.includes('https://sptv.netlify.app')) {
+            url = url.replace('https://sptv.netlify.app/', source);
+        }else if (requestUrl.includes('https://api.codetabs.com/v1/proxy/')) {
+            url = url.replace('https://api.codetabs.com/v1/proxy/', source);
+        }
+
         try {
-            const response = await fetch(fetchEvent.request.url.replace('https://api.codetabs.com/v1/proxy/', source), {
+            const response = await fetch(url, {
                 referrer: "",
                 referrerPolicy: "no-referrer"
             });
             return response;
         } catch (error) {
-            const response = await fetch('https://api.codetabs.com/v1/proxy?quest=' + fetchEvent.request.url.replace('https://api.codetabs.com/v1/proxy/', source), {
+            const response = await fetch('https://api.codetabs.com/v1/proxy?quest=' + url, {
                 referrer: "",
                 referrerPolicy: "no-referrer"
             });
             return response;
         }
-
-
     })());
 });
