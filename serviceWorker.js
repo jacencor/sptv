@@ -194,8 +194,8 @@ self.addEventListener("fetch", (fetchEvent) => {
             !requestUrl.includes(".aac") &&
             !requestUrl.includes(".m4a") &&
             !requestUrl.includes(".m4v") &&
-            !requestUrl.includes(".mpd") &&
-            !requestUrl.includes("/shaka.html?tipo=")) {
+            !requestUrl.includes(".mpd") ||
+            requestUrl.includes("/shaka.html?tipo=")) {
 
             console.log("[PWA requestUrl]: " + requestUrl);
 
