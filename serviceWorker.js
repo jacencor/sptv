@@ -137,8 +137,6 @@ self.addEventListener("fetch", (fetchEvent) => {
                 const networkResponse = await fetch(fetchEvent.request.url, {
                     referrer: "",
                     referrerPolicy: "no-referrer",
-                    credentials: "omit",
-                    cache: "no-cache",
                 });
                 const clonedResponse = networkResponse.clone();
 
@@ -175,8 +173,6 @@ self.addEventListener("fetch", (fetchEvent) => {
             const networkResponse = await fetch(fetchEvent.request.url, {
                 referrer: "",
                 referrerPolicy: "no-referrer",
-                credentials: "omit",
-                cache: "no-cache",
             });
 
             fetchEvent.waitUntil(
@@ -211,16 +207,12 @@ self.addEventListener("fetch", (fetchEvent) => {
             const response = await fetch(url, {
                 referrer: "",
                 referrerPolicy: "no-referrer",
-                credentials: "omit",
-                cache: "no-cache",
             });
             return response;
         } catch (error) {
             const response = await fetch('https://api.codetabs.com/v1/proxy?quest=' + url, {
                 referrer: "",
                 referrerPolicy: "no-referrer",
-                credentials: "omit",
-                cache: "no-cache",
             });
             return response;
         }
