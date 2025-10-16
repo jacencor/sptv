@@ -1,5 +1,5 @@
 /*
-*
+* Simple TV
 */
 let tv = null;
 cargarJSON();
@@ -41,7 +41,6 @@ function makeListTV() {
     playIframe(0);
 }
 
-// Play recurso
 function playIframe(play) {
     console.log("Play iframe: Inicio");
     channel = play;
@@ -80,12 +79,26 @@ function playIframe(play) {
 
     let source = item.source.split('/');
     let url = source.slice(0, -1).join('/');
-    navigator.serviceWorker.controller.postMessage({
-        type: 'ITEM',
-        datos: {
-            url: url+'/',
-        }
-    });
+
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+            type: 'ITEM',
+            datos: {
+                url: url + '/',
+            }
+        });
+    } else {
+        navigator.serviceWorker.ready.then(registration => {
+            registration.active.postMessage({
+                type: 'ITEM',
+                datos: {
+                    url: url + '/',
+                }
+            });
+        }).catch(err => {
+            console.log("No se pudo enviar mensaje al SW:", err);
+        });
+    }
 
     closeNav();
 }
@@ -102,46 +115,55 @@ async function cargarJSON() {
 }
 
 /*
- * ORDEN: CACHE > INTERNET
+ * PWA: CACHE > INTERNET
  */
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
-        console.log("[Service Worker] Carga");
-        const registration = await navigator.serviceWorker
-            .register("/serviceWorker.js")
-            .then((res) => {
-                console.log("[Service Worker] Registrado :P");
-                return res;
-            })
-            .catch(err => () => {
-                console.log("[Service Worker] No Registrado: F");
-                console.log(err);
-            });
-        // por si acaso se perdio la deteccion del update... reenviar el SkIP
-        if (registration.waiting) {
-            console.log("[Service Worker] Saltar espera");
-            registration.waiting.postMessage("SKIP_WAITING");
-        }
-        // Detectar el update y esprar instalar
-        registration.addEventListener("updatefound", () => {
-            console.log("[Service Worker] Actualización");
-            if (registration.installing) {
-                //esperar a que el nuevo serviceworker.js entre a camellar
-                registration.installing.addEventListener("statechange", () => {
-                    if (registration.waiting) {
-                        if (navigator.serviceWorker.controller) {
-                            console.log("[Service Worker] Saltar espera");
-                            registration.waiting.postMessage("SKIP_WAITING");
-                        } else {
-                            // primera instalaciín siga
-                            console.log("[Service Worker] Registrado por primera vez :P")
-                        }
-                    }
+        try {
+            console.log("[Service Worker] Carga");
+            const registration = await navigator.serviceWorker
+                .register("/serviceWorker.js")
+                .then((res) => {
+                    console.log("[Service Worker] Registrado :P");
+                    return res;
+                })
+                .catch(err => () => {
+                    console.log("[Service Worker] No Registrado: F");
+                    console.log(err);
                 });
+            // por si acaso se perdio la deteccion del update... reenviar el SkIP
+            if (registration.waiting) {
+                console.log("[Service Worker] Saltar espera");
+                registration.waiting.postMessage("SKIP_WAITING");
             }
-        });
+            // Detectar el update y esprar instalar
+            registration.addEventListener("updatefound", () => {
+                console.log("[Service Worker] Actualización");
+                if (registration.installing) {
+                    //esperar a que el nuevo serviceworker.js entre a camellar
+                    registration.installing.addEventListener("statechange", () => {
+                        if (registration.waiting) {
+                            if (navigator.serviceWorker.controller) {
+                                console.log("[Service Worker] Saltar espera");
+                                registration.waiting.postMessage("SKIP_WAITING");
+                            } else {
+                                // primera instalaciín siga
+                                console.log("[Service Worker] Registrado por primera vez :P")
+                            }
+                        }
+                    });
+                }
+            });
 
-        console.log(tv);
+            await navigator.serviceWorker.ready;
+            console.log("[Service Worker] LISTO");
+        } catch (err) {
+            console.log("[Service Worker] No Registrado: F", err);
+        }
+
+        console.log("->INIT");
         makeListTV();
     });
+} else {
+    window.addEventListener("load", makeListTV);
 }

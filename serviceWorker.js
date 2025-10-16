@@ -1,7 +1,5 @@
 /*
- *** PWA - OK
- *** ServiceWorker 
- *** jacencor
+ *** PWA 
  */
 
 // Recursos estaticos
@@ -48,7 +46,7 @@ const net = [
     "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Ecuavisa_Logo_2019.png/640px-Ecuavisa_Logo_2019.png",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Teleamazonas_Logo.png/640px-Teleamazonas_Logo.png",
     "https://upload.wikimedia.org/wikipedia/commons/1/13/Rts_logo.png",
-    "https://www.tvc.com.ec/wp-content/uploads/2023/07/logo.png",
+    "https://www.ecured.cu/images/b/b8/TVC_Ecuador.jpg",
     "https://upload.wikimedia.org/wikipedia/commons/2/21/Oromar_logo.png",
     "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/EcuadorTV_logo.png/465px-EcuadorTV_logo.png",
     "https://upload.wikimedia.org/wikipedia/commons/9/94/Gamavisión2018new.png",
@@ -74,20 +72,20 @@ self.addEventListener('message', (event) => {
 
 // Instalar el Service Worker
 self.addEventListener("install", (installEvent) => {
-    console.log("[Service Worker] Install...");
+    console.log("[PWA Worker] Install...");
     installEvent.waitUntil((async () => {
         const CHG = await caches.open(cacheChg);
-        console.log("[Service Worker] Caching CHG: lo que cambia");
+        console.log("[PWA Worker] Caching CHG: lo que cambia");
         await CHG.addAll(chg);
         const STC = await caches.open(cacheStc);
-        console.log("[Service Worker] Caching  STC: lo que no");
+        console.log("[PWA Worker] Caching  STC: lo que no");
         await STC.addAll(stc);
     })());
 });
 
 // Activación del Service Worker
 self.addEventListener("activate", async (activateEvent) => {
-    console.log("[Service Worker] Activate...");
+    console.log("[PWA Worker] Activate...");
     activateEvent.waitUntil(
         caches.keys()
             .then(function (cacheNames) {
@@ -96,7 +94,7 @@ self.addEventListener("activate", async (activateEvent) => {
                         if (cache !== cacheChg &&
                             cache !== cacheStc &&
                             cache !== cacheNet) {
-                            console.log("[Service Cache] Eliminando caché antigua");
+                            console.log("[PWA Cache] Eliminando caché antigua");
                             return caches.delete(cache);
                         }
                     })
@@ -116,12 +114,12 @@ self.addEventListener("activate", async (activateEvent) => {
 // Recibir datos DE la página principal
 self.addEventListener('message', event => {
     if (event.data.type === 'ITEM') {
-        console.log('Datos recibidos:', event.data.datos);
+        console.log('[PWA Source] ', event.data.datos);
         source = event.data.datos.url;
     }
 });
 
-// Fetching contenido usando el Service Worker
+// Fetching del contenido usando el Service Worker
 self.addEventListener("fetch", (fetchEvent) => {
     const requestUrl = fetchEvent.request.url;
     const isExternalResource = net.some((host) => requestUrl.startsWith(host));
@@ -134,11 +132,13 @@ self.addEventListener("fetch", (fetchEvent) => {
         const cachedResponseChg = await cacheChgOpen.match(fetchEvent.request);
 
         if (cachedResponseChg) {
-            console.log("[Service Cache] CHG: " + requestUrl);
+            console.log("[PWA Cache] CHG: " + requestUrl);
             try {
                 const networkResponse = await fetch(fetchEvent.request.url, {
                     referrer: "",
-                    referrerPolicy: "no-referrer"
+                    referrerPolicy: "no-referrer",
+                    credentials: "omit",
+                    cache: "no-cache",
                 });
                 const clonedResponse = networkResponse.clone();
 
@@ -146,11 +146,11 @@ self.addEventListener("fetch", (fetchEvent) => {
 
                 // Guardar la respuesta en la caché 
                 cacheChgOpen.put(fetchEvent.request, clonedResponse);
-                console.log("[Service Cache] CHG > UPDATED: " + requestUrl);
+                console.log("[PWA Cache] CHG > UPDATED: " + requestUrl);
 
                 return networkResponse;
             } catch (error) {
-                console.log("[Service Fetch] error: " + error);
+                console.log("[PWA Fetch] error: " + error);
                 // Si hay un error al obtener la respuesta desde el servidor, se devuelve la respuesta en caché.
                 return cachedResponseChg;
             }
@@ -159,7 +159,7 @@ self.addEventListener("fetch", (fetchEvent) => {
         const cachedResponseStc = await cacheStcOpen.match(fetchEvent.request);
         if (cachedResponseStc) {
             //Retornar recursos estaticos
-            console.log("[Service Cache] STC: " + fetchEvent.request.url);
+            console.log("[PWA Cache] STC: " + fetchEvent.request.url);
             return cachedResponseStc;
         }
 
@@ -167,21 +167,23 @@ self.addEventListener("fetch", (fetchEvent) => {
             const cachedResponseNet = await cacheNetOpen.match(fetchEvent.request);
             if (cachedResponseNet) {
                 // Retornar recursos externos desde la caché
-                console.log("[Service Cache] NET: " + requestUrl);
+                console.log("[PWA Cache] NET: " + requestUrl);
                 return cachedResponseNet;
             }
 
             // Actualizar recursos externos desde el servidor
             const networkResponse = await fetch(fetchEvent.request.url, {
                 referrer: "",
-                referrerPolicy: "no-referrer"
+                referrerPolicy: "no-referrer",
+                credentials: "omit",
+                cache: "no-cache",
             });
 
             fetchEvent.waitUntil(
                 cacheNetOpen.put(fetchEvent.request, networkResponse.clone())
             );
 
-            console.log("[Service Cache] NET > UPDATE: " + requestUrl);
+            console.log("[PWA Cache] NET > UPDATE: " + requestUrl);
             return networkResponse;
         }
 
@@ -191,27 +193,34 @@ self.addEventListener("fetch", (fetchEvent) => {
             !requestUrl.includes(".m4a") &&
             !requestUrl.includes(".m4v") &&
             !requestUrl.includes(".mpd")) {
-            console.log("[Service requestUrl]: " + requestUrl);
+            console.log("[PWA requestUrl]: " + requestUrl);
         }
 
         let url = fetchEvent.request.url;
+
         if (requestUrl.includes('https://sptv.netlify.app')) {
+            console.log("[PWA requestUrl]: " + requestUrl);
             url = url.replace('https://sptv.netlify.app/', source);
         }
         if (requestUrl.includes('https://api.codetabs.com/v1/proxy')) {
+            console.log("[PWA requestUrl]: " + requestUrl);
             url = url.replace('https://api.codetabs.com/v1/proxy/', source);
         }
 
         try {
             const response = await fetch(url, {
                 referrer: "",
-                referrerPolicy: "no-referrer"
+                referrerPolicy: "no-referrer",
+                credentials: "omit",
+                cache: "no-cache",
             });
             return response;
         } catch (error) {
             const response = await fetch('https://api.codetabs.com/v1/proxy?quest=' + url, {
                 referrer: "",
-                referrerPolicy: "no-referrer"
+                referrerPolicy: "no-referrer",
+                credentials: "omit",
+                cache: "no-cache",
             });
             return response;
         }
