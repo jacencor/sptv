@@ -137,6 +137,8 @@ self.addEventListener("fetch", (fetchEvent) => {
                 const networkResponse = await fetch(fetchEvent.request.url, {
                     referrer: "",
                     referrerPolicy: "no-referrer",
+                    credentials: "omit",
+                    cache: "no-cache",
                 });
                 const clonedResponse = networkResponse.clone();
 
@@ -173,6 +175,8 @@ self.addEventListener("fetch", (fetchEvent) => {
             const networkResponse = await fetch(fetchEvent.request.url, {
                 referrer: "",
                 referrerPolicy: "no-referrer",
+                credentials: "omit",
+                cache: "no-cache",
             });
 
             fetchEvent.waitUntil(
@@ -183,37 +187,46 @@ self.addEventListener("fetch", (fetchEvent) => {
             return networkResponse;
         }
 
+        let url = fetchEvent.request.url;
+
         if (!requestUrl.includes(".m3u8") &&
             !requestUrl.includes(".ts") &&
             !requestUrl.includes(".aac") &&
             !requestUrl.includes(".m4a") &&
             !requestUrl.includes(".m4v") &&
             !requestUrl.includes(".mpd")) {
-            console.log("[PWA requestUrl]: " + requestUrl);
-        }
 
-        let url = fetchEvent.request.url;
+            console.log("[PWA requestUrl]: " + requestUrl);
 
-        if (requestUrl.includes('https://sptv.netlify.app')) {
-            console.log("[PWA requestUrl]: " + requestUrl);
-            url = url.replace('https://sptv.netlify.app/', source);
-        }
-        if (requestUrl.includes('https://api.codetabs.com/v1/proxy')) {
-            console.log("[PWA requestUrl]: " + requestUrl);
-            url = url.replace('https://api.codetabs.com/v1/proxy/', source);
+        } else {
+
+            if (requestUrl.includes('https://sptv.netlify.app')) {
+                console.log("[PWA requestUrl]: " + requestUrl);
+                url = url.replace('https://sptv.netlify.app/', source);
+            }
+            if (requestUrl.includes('https://api.codetabs.com/v1/proxy')) {
+                console.log("[PWA requestUrl]: " + requestUrl);
+                url = url.replace('https://api.codetabs.com/v1/proxy/', source);
+            }
         }
 
         try {
             const response = await fetch(url, {
                 referrer: "",
                 referrerPolicy: "no-referrer",
+                credentials: "omit",
+                cache: "no-cache",
             });
+
             return response;
         } catch (error) {
             const response = await fetch('https://api.codetabs.com/v1/proxy?quest=' + url, {
                 referrer: "",
                 referrerPolicy: "no-referrer",
+                credentials: "omit",
+                cache: "no-cache",
             });
+
             return response;
         }
     })());
