@@ -20,9 +20,32 @@ https://alba-ec-tvc-tvc.stream.mediatiquestream.com/360p.m3u8
 #EXTINF:-1 tvg-id="ECTV.ec" tvg-logo="https://sptv.netlify.app/img/ch/Todostv.png" group-title="Todos",EC TV
 https://samson.streamerr.co:8081/shogun/index.m3u8
 
-#EXTINF:-1 tvg-id="AmericaTV.ec" tvg-logo="https://sptv.netlify.app/img/ch/americatv.png" group-title="Todos",America TV
+#EXTINF:-1 tvg-id="AmericaTV.ar" tvg-logo="https://sptv.netlify.app/img/ch/americatv.png" group-title="Todos",America TV
 https://origin.dpsgo.com/ssai/event/3CNEz8LDSXGyWmOfV5YubQ/master.m3u8
 
-#EXTINF:-1 tvg-id="DW.ec" tvg-logo="https://sptv.netlify.app/img/ch/dw.png" group-title="Todos;Internacional",DW Español
+#EXTINF:-1 tvg-id="DW.ec" tvg-logo="https://sptv.netlify.app/img/ch/dw.png" group-title="Todos",DW Español
 https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8
 
+#EXTINF:-1 tvg-id="Cinecanal.us@Panregional" tvg-logo="https://sptv.netlify.app/img/ch/cinecanal.jpg" group-title="Todos",Cinecanal
+https://streamer1.nexgen.bz/CINECANAL/index.m3u8
+
+#EXTINF:-1 tvg-id="StudioUniversalLatinAmerica.us@Panregional" tvg-logo="https://sptv.netlify.app/img/ch/studiouniversal.png" group-title="Todos",Studio Universal Latin America
+https://streamer1.nexgen.bz/STUDIO_UNIVERSAL/index.m3u8
+
+#EXTINF:-1 tvg-id="NationalGeographicLatinAmerica.us@Panregional" tvg-logo="https://sptv.netlify.app/img/ch/natgeo.png" group-title="Todos",National Geographic Latin America
+https://streamer1.nexgen.bz/NAT_GEO/index.m3u8
+
+#EXTINF:-1 tvg-id="EuronewsSpanish.fr@SD" tvg-logo="https://i.imgur.com/8t9mdg9.png" group-title="Todos",Euronews
+https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/euronews-spa/euronews-es.m3u8
+
+#EXTINF:-1 tvg-id="France24.fr@Spanish" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/France_24_logo_%282013%29.svg/512px-France_24_logo_%282013%29.svg.png" group-title="Todos",France 24
+https://live.france24.com/hls/live/2037220-b/F24_ES_HI_HLS/master_5000.m3u8
+
+#EXTINF:-1 tvg-id="NHKWorldPremium.jp@SD" tvg-logo="https://i.imgur.com/4ESi2La.png" group-title="Todos",NHK World Premium
+https://cdn.nhkworld.jp/www11/nhkworld-tv/pre/hlscomp.m3u8
+
+#EXTINF:-1 tvg-id="RTenEspanol.ru@SD" tvg-logo="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Russia-today-logo.svg/512px-Russia-today-logo.svg.png" group-title="Todos",RT
+https://rt-esp.rttv.com/dvr/rtesp/playlist.m3u8
+
+#EXTINF:-1 tvg-id="TVEInternacionalAmerica.es@SD" tvg-logo="https://i.imgur.com/iODADvi.png" group-title="Todos",TVE Internacional
+https://rtvelivestream-rtveplayplus.rtve.es/rtvesec/int/tvei_ame_main_1080.m3u8
