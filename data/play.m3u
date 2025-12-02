@@ -1,28 +1,28 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="Ecuavisa.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecauvisa.png" group-title="Ecuador",Ecuavisa
+#EXTINF:-1 tvg-id="Ecuavisa.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecauvisa.png" group-title="Todos",Ecuavisa
 https://jireh-1-hls-video-ar-isp.dps.live/hls-video/c54ac2799874375c81c1672abb700870537c5223/ecuavisa/ecuavisa.smil/playlist.m3u8
 
-#EXTINF:-1 tvg-id="Teleamazonas.ec" tvg-logo="https://sptv.netlify.app/img/ch/teleamazonas.png" group-title="Ecuador",Teleamazonas
+#EXTINF:-1 tvg-id="Teleamazonas.ec" tvg-logo="https://sptv.netlify.app/img/ch/teleamazonas.png" group-title="Todos",Teleamazonas
 https://teleamazonas-live.cdn.vustreams.com/live/fd4ab346-b4e3-4628-abf0-b5a1bc192428/live.isml/fd4ab346-b4e3-4628-abf0-b5a1bc192428.m3u8
 
-#EXTINF:-1 tvg-id="RTS.ec" tvg-logo="https://sptv.netlify.app/img/ch/rts.png" group-title="Ecuador",RTS
+#EXTINF:-1 tvg-id="RTS.ec" tvg-logo="https://sptv.netlify.app/img/ch/rts.png" group-title="Todos",RTS
 https://alba-ec-rts-rts.stream.mediatiquestream.com/480p.m3u8
 
-#EXTINF:-1 tvg-id="Oromar.ec" tvg-logo="https://sptv.netlify.app/img/ch/oromar.png" group-title="Ecuador",Oromar
+#EXTINF:-1 tvg-id="Oromar.ec" tvg-logo="https://sptv.netlify.app/img/ch/oromar.png" group-title="Todos",Oromar
 https://stream.oromar.tv/hls/oromartv_hi/index.m3u8
 
-#EXTINF:-1 tvg-id="RTU.ec" tvg-logo="https://canalrtu.tv/wp-content/uploads/2022/07/rtu.png" group-title="Ecuador",RTU
+#EXTINF:-1 tvg-id="RTU.ec" tvg-logo="https://canalrtu.tv/wp-content/uploads/2022/07/rtu.png" group-title="Todos",RTU
 https://video1.makrodigital.com/rtu/rtu/playlist.m3u8
 
-#EXTINF:-1 tvg-id="TVC.ec" tvg-logo="https://www.ecured.cu/images/b/b8/TVC_Ecuador.jpg" group-title="Ecuador",TVC
+#EXTINF:-1 tvg-id="TVC.ec" tvg-logo="https://www.ecured.cu/images/b/b8/TVC_Todos.jpg" group-title="Todos",TVC
 https://alba-ec-tvc-tvc.stream.mediatiquestream.com/360p.m3u8
 
-#EXTINF:-1 tvg-id="ECTV.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuadortv.png" group-title="Ecuador",EC TV
+#EXTINF:-1 tvg-id="ECTV.ec" tvg-logo="https://sptv.netlify.app/img/ch/Todostv.png" group-title="Todos",EC TV
 https://samson.streamerr.co:8081/shogun/index.m3u8
 
-#EXTINF:-1 tvg-id="AmericaTV.ec" tvg-logo="https://sptv.netlify.app/img/ch/americatv.png" group-title="Ecuador",America TV
+#EXTINF:-1 tvg-id="AmericaTV.ec" tvg-logo="https://sptv.netlify.app/img/ch/americatv.png" group-title="Todos",America TV
 https://origin.dpsgo.com/ssai/event/3CNEz8LDSXGyWmOfV5YubQ/master.m3u8
 
-#EXTINF:-1 tvg-id="DW.ec" tvg-logo="https://sptv.netlify.app/img/ch/dw.png" group-title="Internacional",DW Español
+#EXTINF:-1 tvg-id="DW.ec" tvg-logo="https://sptv.netlify.app/img/ch/dw.png" group-title="Todos;Internacional",DW Español
 https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8
 
