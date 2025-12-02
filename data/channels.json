@@ -49,11 +49,18 @@
         "name": "EC TV"
     },
     {
-        "source": "https://live-evg1.tv360.bitel.com.pe/bitel/americatv/playlist.m3u8",
+        "source": "https://origin.dpsgo.com/ssai/event/3CNEz8LDSXGyWmOfV5YubQ/master.m3u8",
         "key": null,
         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/América_Televisión.svg/471px-América_Televisión.svg.png",
         "type": "OPEN",
         "name": "America TV"
+    },
+    {
+        "source": "https://unlimited1-mx.dps.live/mega/mega.smil/playlist.m3u8",
+        "key": null,
+        "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/América_Televisión.svg/471px-América_Televisión.svg.png",
+        "type": "OPEN",
+        "name": "America"
     },
     {
         "source": "https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8",
@@ -61,5 +68,12 @@
         "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/640px-Deutsche_Welle_symbol_2012.svg.png",
         "type": "OPEN",
         "name": "DW Español"
+    },
+    {
+        "source": "https://live.eu-north-1b.cf.dmcdn.net/sec2(7_1URjxAPWTyDBKKaINQcY_vLjJIA2vCeufrGG8iN7eEwnIX-rI6ZRStVVU_IpdJgTQAvknabpyr5iEkykrsXU68ltqNHj2K1Ok_x0trnih9JLZp274rTRRbh8VOr0BM)/dm/3/x7wijay/s/live-380.m3u8",
+        "key": null,
+        "img": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/América_Televisión.svg/471px-América_Televisión.svg.png",
+        "type": "OPEN",
+        "name": "tc"
     }
 ]
