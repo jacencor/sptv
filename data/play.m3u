@@ -24,13 +24,28 @@ https://samson.streamerr.co:8081/shogun/index.m3u8
 https://streamer1.nexgen.bz/CINECANAL/index.m3u8
 
 #EXTINF:-1 tvg-id="201.pg" tvg-logo="https://sptv.netlify.app/img/ch/studiouniversal.png" group-title="Todos",201 Studio Universal
-https://streamer1.nexgen.bz/STUDIO_UNIVERSAL/index.m3u8
+https://streamer1.nexgen.bz/STUDIO_UNIVERSAL/tracks-v1a2/mono.ts.m3u8
 
-#EXTINF:-1 tvg-id="202.pg" tvg-logo="https://sptv.netlify.app/img/ch/natgeo.png" group-title="Todos",202 National Geographic
-https://streamer1.nexgen.bz/NAT_GEO/index.m3u8
+#EXTINF:-1 tvg-id="202.pg" tvg-logo="https://sptv.netlify.app/img/ch/fx.jpg" group-title="Todos",202 FX
+https://streamer1.nexgen.bz/FX/tracks-v1a2/mono.ts.m3u8
 
 #EXTINF:-1 tvg-id="203.pg" tvg-logo="https://i.imgur.com/bZWoDTg.png" group-title="Todos",203 Sony Cine
 https://a-cdn.klowdtv.com/live1/cine_720p/playlist.m3u8
+
+#EXTINF:-1 tvg-id="204.pg" tvg-logo="https://sptv.netlify.app/img/ch/axn.png" group-title="Todos",204 AXN
+https://streamer1.nexgen.bz/AXN/tracks-v1a2/mono.ts.m3u8
+
+#EXTINF:-1 tvg-id="205.pg" tvg-logo="https://sptv.netlify.app/img/ch/cinemax.png" group-title="Todos",205 Cinemax
+https://streamer1.nexgen.bz/CINEMAX/tracks-v1a2/mono.ts.m3u8
+
+#EXTINF:-1 tvg-id="210.pg" tvg-logo="https://sptv.netlify.app/img/ch/natgeo.png" group-title="Todos",210 National Geographic
+https://streamer1.nexgen.bz/NAT_GEO/index.m3u8
+
+#EXTINF:-1 tvg-id="211.pg" tvg-logo="https://sptv.netlify.app/img/ch/discovery.png" group-title="Todos",211 Discovery
+https://streamer1.nexgen.bz/DISCOVERY/tracks-v1a2/mono.ts.m3u8
+
+#EXTINF:-1 tvg-id="211.pg" tvg-logo="https://sptv.netlify.app/img/ch/lifetime.jpg" group-title="Todos",212 Lifetime
+https://streamer1.nexgen.bz/LIFETIME/tracks-v1a2/mono.ts.m3u8
 
 #EXTINF:-1 tvg-id="300.in" tvg-logo="https://sptv.netlify.app/img/ch/canal13.png" group-title="Todos",300 Canal 13 Chile
 https://origin.dpsgo.com/ssai/event/3CNEz8LDSXGyWmOfV5YubQ/master.m3u8
