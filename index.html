@@ -11,7 +11,6 @@
     <meta name="format-detection" content="telephone=no">
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-    <!-- ios support PWA-->
     <meta name="apple-mobile-web-app-status-bar" content="#212529">
     <meta name="apple-mobile-web-app-title" content="Simple TV">
     <link rel="apple-touch-icon" sizes="16x16" href="img/ico/icon-16x16.png">
@@ -21,13 +20,21 @@
     <link rel="apple-touch-icon" sizes="128x128" href="img/ico/icon-128x128.png">
     <link rel="apple-touch-icon" sizes="256x256" href="img/ico/icon-256x256.png">
     <link rel="apple-touch-icon" sizes="512x512" href="img/ico/icon-512x512.png">
-    <!-- PWA start -->
     <link rel="manifest" href="manifest.json">
-    <!-- STYLE -->
     <link rel="icon" type="image/x-icon" href="img/ico/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="css/style.css">
     <script defer type="text/javascript" language="javascript" src="js/sptv.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.16/controls.min.css"
+        integrity="sha512-qfN9URP2eW0ztodvaIyCTygnNiK4UbvQlOW3FDJrgtNVt62ceoBJ2o16ZRYx6q0UCzBrJAY3JXLKeRzc3KH7kA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.3.16/shaka-player.ui.min.js"
+        integrity="sha512-vSg4cHAsb89HeoGS2ZMzF8ow5zFH+XCB9zNY/2eypkGTb2idH5gl3OgTMT2RAff7bBXvvnKgCYJ7Wic7SwiO3g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mux.js/7.0.3/mux.min.js"
+        integrity="sha512-TH+Yaq1BxaQIU03XWajyBW+CYYtGjzjskwVefVhfN5/4f9xIhxM+z0yjeGkkQwUKRws/dSdAAHJpJdc7/PVZPg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js" referrerpolicy="no-referrer"></script>
     <title>SPTV</title>
 </head>
 
@@ -40,11 +47,11 @@
     </div>
 
     <div class="container">
-        <button class="btn" onclick="openNav()"><i class="fa fa-bars"></i></button>
+        <button id="openSidebar" class="btn" onclick="openNav()"><i class="fa fa-bars"></i></button>
         <div id="mainStream">
-            <iframe id="iPlayer" src="shaka.html" title="Video Player" allow="encrypted-media; autoplay; fullscreen"
-                allowfullscreen></iframe>
-            <div id="infoStream" class="infoStream"></div>
+            <div data-shaka-player-container>
+                <video id="video" autoplay data-shaka-player></video>
+            </div>
         </div>
     </div>
 

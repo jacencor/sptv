@@ -1,69 +1,69 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="100.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuavisa.png" group-title="Todos",100 Ecuavisa
+#EXTINF:-1 tvg-id="2.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuavisa.png" group-title="Todos",2 Ecuavisa
 https://jireh-1-hls-video-ar-isp.dps.live/hls-video/c54ac2799874375c81c1672abb700870537c5223/ecuavisa/ecuavisa.smil/playlist.m3u8
 
-#EXTINF:-1 tvg-id="101.ec" tvg-logo="https://sptv.netlify.app/img/ch/teleamazonas.png" group-title="Todos",101 Teleamazonas
-https://teleamazonas-live.cdn.vustreams.com/live/fd4ab346-b4e3-4628-abf0-b5a1bc192428/live.isml/fd4ab346-b4e3-4628-abf0-b5a1bc192428.m3u8
-
-#EXTINF:-1 tvg-id="102.ec" tvg-logo="https://sptv.netlify.app/img/ch/rts.png" group-title="Todos",102 RTS
+#EXTINF:-1 tvg-id="4.ec" tvg-logo="https://sptv.netlify.app/img/ch/rts.png" group-title="Todos",4 RTS
 https://alba-ec-rts-rts.stream.mediatiquestream.com/480p.m3u8
 
-#EXTINF:-1 tvg-id="103.ec" tvg-logo="https://sptv.netlify.app/img/ch/oroomar.png" group-title="Todos",103 Oromar
+#EXTINF:-1 tvg-id="5.ec" tvg-logo="https://sptv.netlify.app/img/ch/teleamazonas.png" group-title="Todos",5 Teleamazonas
+https://teleamazonas-live.cdn.vustreams.com/live/fd4ab346-b4e3-4628-abf0-b5a1bc192428/live.isml/fd4ab346-b4e3-4628-abf0-b5a1bc192428.m3u8
+
+#EXTINF:-1 tvg-id="10.ec" tvg-logo="https://sptv.netlify.app/img/ch/oroomar.png" group-title="Todos",10 Oromar
 https://stream.oromar.tv/hls/oromartv_hi/index.m3u8
 
-#EXTINF:-1 tvg-id="104.ec" tvg-logo="https://canalrtu.tv/wp-content/uploads/2022/07/rtu.png" group-title="Todos",104 RTU
+#EXTINF:-1 tvg-id="11.ec" tvg-logo="https://canalrtu.tv/wp-content/uploads/2022/07/rtu.png" group-title="Todos",11 RTU
 https://video1.makrodigital.com/rtu/rtu/playlist.m3u8
 
-#EXTINF:-1 tvg-id="105.ec" tvg-logo="https://sptv.netlify.app/img/ch/tvc.jpg" group-title="Todos",105 TVC
+#EXTINF:-1 tvg-id="12.ec" tvg-logo="https://sptv.netlify.app/img/ch/tvc.jpg" group-title="Todos",12 TVC
 https://alba-ec-tvc-tvc.stream.mediatiquestream.com/360p.m3u8
 
-#EXTINF:-1 tvg-id="106.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuadortv.png" group-title="Todos",106 EC TV
+#EXTINF:-1 tvg-id="13.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuadortv.png" group-title="Todos",13 EC TV
 https://samson.streamerr.co:8081/shogun/index.m3u8
 
-#EXTINF:-1 tvg-id="200.pg" tvg-logo="https://sptv.netlify.app/img/ch/cinecanal.jpg" group-title="Todos",200 Cinecanal
+#EXTINF:-1 tvg-id="20.pg" tvg-logo="https://sptv.netlify.app/img/ch/cinecanal.jpg" group-title="Todos",20 Cinecanal
 https://streamer1.nexgen.bz/CINECANAL/index.m3u8
 
-#EXTINF:-1 tvg-id="201.pg" tvg-logo="https://sptv.netlify.app/img/ch/studiouniversal.png" group-title="Todos",201 Studio Universal
+#EXTINF:-1 tvg-id="21.pg" tvg-logo="https://sptv.netlify.app/img/ch/studiouniversal.png" group-title="Todos",21 Studio Universal
 https://streamer1.nexgen.bz/STUDIO_UNIVERSAL/tracks-v1a2/mono.ts.m3u8
 
-#EXTINF:-1 tvg-id="202.pg" tvg-logo="https://sptv.netlify.app/img/ch/fx.jpg" group-title="Todos",202 FX
+#EXTINF:-1 tvg-id="22.pg" tvg-logo="https://sptv.netlify.app/img/ch/fx.jpg" group-title="Todos",22 FX
 https://streamer1.nexgen.bz/FX/tracks-v1a2/mono.ts.m3u8
 
-#EXTINF:-1 tvg-id="203.pg" tvg-logo="https://i.imgur.com/bZWoDTg.png" group-title="Todos",203 Sony Cine
+#EXTINF:-1 tvg-id="23.pg" tvg-logo="https://i.imgur.com/bZWoDTg.png" group-title="Todos",23 Sony Cine
 https://a-cdn.klowdtv.com/live1/cine_720p/playlist.m3u8
 
-#EXTINF:-1 tvg-id="204.pg" tvg-logo="https://sptv.netlify.app/img/ch/axn.png" group-title="Todos",204 AXN
+#EXTINF:-1 tvg-id="24.pg" tvg-logo="https://sptv.netlify.app/img/ch/axn.png" group-title="Todos",24 AXN
 https://streamer1.nexgen.bz/AXN/tracks-v1a2/mono.ts.m3u8
 
-#EXTINF:-1 tvg-id="205.pg" tvg-logo="https://sptv.netlify.app/img/ch/cinemax.png" group-title="Todos",205 Cinemax
+#EXTINF:-1 tvg-id="25.pg" tvg-logo="https://sptv.netlify.app/img/ch/cinemax.png" group-title="Todos",25 Cinemax
 https://streamer1.nexgen.bz/CINEMAX/tracks-v1a2/mono.ts.m3u8
 
-#EXTINF:-1 tvg-id="210.pg" tvg-logo="https://sptv.netlify.app/img/ch/natgeo.png" group-title="Todos",210 National Geographic
+#EXTINF:-1 tvg-id="26.pg" tvg-logo="https://sptv.netlify.app/img/ch/natgeo.png" group-title="Todos",26 National Geographic
 https://streamer1.nexgen.bz/NAT_GEO/index.m3u8
 
-#EXTINF:-1 tvg-id="211.pg" tvg-logo="https://sptv.netlify.app/img/ch/discovery.png" group-title="Todos",211 Discovery
+#EXTINF:-1 tvg-id="27.pg" tvg-logo="https://sptv.netlify.app/img/ch/discovery.png" group-title="Todos",27 Discovery
 https://streamer1.nexgen.bz/DISCOVERY/tracks-v1a2/mono.ts.m3u8
 
-#EXTINF:-1 tvg-id="211.pg" tvg-logo="https://sptv.netlify.app/img/ch/lifetime.jpg" group-title="Todos",212 Lifetime
+#EXTINF:-1 tvg-id="28.pg" tvg-logo="https://sptv.netlify.app/img/ch/lifetime.jpg" group-title="Todos",28 Lifetime
 https://streamer1.nexgen.bz/LIFETIME/tracks-v1a2/mono.ts.m3u8
 
-#EXTINF:-1 tvg-id="300.in" tvg-logo="https://sptv.netlify.app/img/ch/canal13.png" group-title="Todos",300 Canal 13 Chile
+#EXTINF:-1 tvg-id="30.in" tvg-logo="https://sptv.netlify.app/img/ch/canal13.png" group-title="Todos",30 Canal 13 Chile
 https://origin.dpsgo.com/ssai/event/3CNEz8LDSXGyWmOfV5YubQ/master.m3u8
 
-#EXTINF:-1 tvg-id="301.in" tvg-logo="https://sptv.netlify.app/img/ch/dw.png" group-title="Todos",301 DW
+#EXTINF:-1 tvg-id="31.in" tvg-logo="https://sptv.netlify.app/img/ch/dw.png" group-title="Todos",31 DW
 https://dwamdstream104.akamaized.net/hls/live/2015530/dwstream104/index.m3u8
 
-#EXTINF:-1 tvg-id="302.in" tvg-logo="https://i.imgur.com/8t9mdg9.png" group-title="Todos",302 Euronews
+#EXTINF:-1 tvg-id="32.in" tvg-logo="https://i.imgur.com/8t9mdg9.png" group-title="Todos",32 Euronews
 https://d35j504z0x2vu2.cloudfront.net/v1/master/0bc8e8376bd8417a1b6761138aa41c26c7309312/euronews-spa/euronews-es.m3u8
 
-#EXTINF:-1 tvg-id="303.in" tvg-logo="https://sptv.netlify.app/img/ch/fr24.png" group-title="Todos",303 France 24
+#EXTINF:-1 tvg-id="33.in" tvg-logo="https://sptv.netlify.app/img/ch/fr24.png" group-title="Todos",33 France 24
 https://live.france24.com/hls/live/2037220-b/F24_ES_HI_HLS/master_5000.m3u8
 
-#EXTINF:-1 tvg-id="304.in" tvg-logo="https://sptv.netlify.app/img/ch/rt.png" group-title="Todos",304 RT
+#EXTINF:-1 tvg-id="34.in" tvg-logo="https://sptv.netlify.app/img/ch/rt.png" group-title="Todos",34 RT
 https://rt-esp.rttv.com/dvr/rtesp/playlist.m3u8
 
-#EXTINF:-1 tvg-id="305.in" tvg-logo="https://i.imgur.com/iODADvi.png" group-title="Todos",305 TVE Internacional
+#EXTINF:-1 tvg-id="35.in" tvg-logo="https://i.imgur.com/iODADvi.png" group-title="Todos",35 TVE Internacional
 https://rtvelivestream-rtveplayplus.rtve.es/rtvesec/int/tvei_ame_main_1080.m3u8
 
-#EXTINF:-1 tvg-id="400.nv" tvg-logo="https://sptv.netlify.app/img/ch/sonynovelas.jpg" group-title="Todos",400 Sony Novelas
+#EXTINF:-1 tvg-id="40.nv" tvg-logo="https://sptv.netlify.app/img/ch/sonynovelas.jpg" group-title="Todos",40 Sony Novelas
 https://a89829b8dca2471ab52ea9a57bc28a35.mediatailor.us-east-1.amazonaws.com/v1/master/0fb304b2320b25f067414d481a779b77db81760d/CanelaTV_SonyCanalNovelas/playlist.m3u8

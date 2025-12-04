@@ -15,17 +15,32 @@ const stc = [
     "/img/ico/icon-512x512.png",
     //images
     "/img/app/error.png",
-    "/img/app/poster.jpg",
+    "/img/ch/americatv.png",
+    "/img/ch/axn.png",
+    "/img/ch/canal13.png",
+    "/img/ch/cinecanal.jpg",
+    "/img/ch/cinemax.png",
+    "/img/ch/discovery.png",
+    "/img/ch/dw.png",
+    "/img/ch/ecuadortv.png",
+    "/img/ch/ecuavisa.png",
+    "/img/ch/fr24.png",
+    "/img/ch/fx.jpg",
+    "/img/ch/lifetime.jpg",
+    "/img/ch/natgeo.png",
+    "/img/ch/oroomar.png",
+    "/img/ch/rt.png",
+    "/img/ch/rts.png",
+    "/img/ch/sonynovelas.jpg",
+    "/img/ch/studiouniversal.png",
+    "/img/ch/teleamazonas.png",
+    "/img/ch/tvc.jpg",
 ];
 //Recursos variables
 const chg = [
     "/index.html",
-    "/shaka.html",
     "/js/sptv.js",
-    "/js/play.js",
-    "/data/channels.json",
     "/css/style.css",
-    "/css/player.css",
     "/manifest.json",
 ];
 //Recursos externos
@@ -41,27 +56,16 @@ const net = [
     "//www.gstatic.com/eureka/clank/112/cast_sender.js",
     "//www.gstatic.com/eureka/clank/113/cast_sender.js",
     "http://www.gstatic.com/cast/sdk/libs/sender/1.0/cast_framework.js",
-    //imagenes
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/América_Televisión.svg/471px-América_Televisión.svg.png",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f2/Ecuavisa_Logo_2019.png/640px-Ecuavisa_Logo_2019.png",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Teleamazonas_Logo.png/640px-Teleamazonas_Logo.png",
-    "https://upload.wikimedia.org/wikipedia/commons/1/13/Rts_logo.png",
-    "https://www.ecured.cu/images/b/b8/TVC_Ecuador.jpg",
-    "https://upload.wikimedia.org/wikipedia/commons/2/21/Oromar_logo.png",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/EcuadorTV_logo.png/465px-EcuadorTV_logo.png",
-    "https://upload.wikimedia.org/wikipedia/commons/9/94/Gamavisión2018new.png",
-    "https://canalrtu.tv/wp-content/uploads/2022/07/rtu.png",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Deutsche_Welle_symbol_2012.svg/640px-Deutsche_Welle_symbol_2012.svg.png",
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b0/Telemundo_logo_2012.svg/615px-Telemundo_logo_2012.svg.png",
 ];
 
 //Versiones cache
-const version = "v2.2"
+const version = "v3.1"
 const cacheChg = "app-sTV-chg-" + version;
 const cacheStc = "app-sTV-stc-" + version;
 const cacheNet = "app-sTV-net-" + version;
 
 let source = "";
+let cors = false;
 
 // Permitir usar nuevo serviceWorker
 self.addEventListener('message', (event) => {
@@ -114,8 +118,9 @@ self.addEventListener("activate", async (activateEvent) => {
 // Recibir datos DE la página principal
 self.addEventListener('message', event => {
     if (event.data.type === 'ITEM') {
-        console.log('[PWA Source] ', event.data.datos);
-        source = event.data.datos.url;
+        console.log('[PWA dataget] ', event.data.data);
+        source = event.data.data.url;
+        cors = event.data.data.cors;
     }
 });
 
@@ -189,26 +194,17 @@ self.addEventListener("fetch", (fetchEvent) => {
 
         let url = fetchEvent.request.url;
 
-        if (!requestUrl.includes(".m3u8") &&
-            !requestUrl.includes(".ts") &&
-            !requestUrl.includes(".aac") &&
-            !requestUrl.includes(".m4a") &&
-            !requestUrl.includes(".m4v") &&
-            !requestUrl.includes(".mpd") ||
-            requestUrl.includes("/shaka.html?tipo=")) {
+        console.log("[PWA requestUrl]: " + url);
 
-            console.log("[PWA requestUrl]: " + requestUrl);
-
-        } else {
-
-            if (requestUrl.includes('https://sptv.netlify.app')) {
-                console.log("[PWA requestUrl]: " + requestUrl);
+        if (cors) {
+            if (url.includes('https://sptv.netlify.app')) {
                 url = url.replace('https://sptv.netlify.app/', source);
             }
-            if (requestUrl.includes('https://api.codetabs.com/v1/proxy')) {
-                console.log("[PWA requestUrl]: " + requestUrl);
+            if (url.includes('https://api.codetabs.com/v1/proxy')) {
                 url = url.replace('https://api.codetabs.com/v1/proxy/', source);
             }
+            url = "https://api.codetabs.com/v1/proxy?quest=" + url
+            console.log("[PWA proxy]: " + url);
         }
 
         try {
