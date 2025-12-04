@@ -1,8 +1,10 @@
 /*
 * Simple TV
 */
-let tv = null;
-cargarJSON();
+let tv = [];
+let m3u = [];
+//cargarJSON();
+cargarM3u();
 
 function openNav() {
     document.getElementById("mySidebar").style.width = "250px";
@@ -103,11 +105,57 @@ function playIframe(play) {
     closeNav();
 }
 
+function parseM3UToJSON() {
+    const result = [];
+    const lines = m3u.split('\n');
+    let current = null;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith('#EXTINF:')) {
+            current = {
+                source: '',
+                key: null,
+                img: '',
+                type: 'OPEN',
+                name: ''
+            };
+
+            // Extraer nombre del canal
+            const nameMatch = trimmed.match(/,(.+)$/);
+            if (nameMatch) current.name = nameMatch[1].trim();
+
+            // Extraer logo
+            const logoMatch = trimmed.match(/tvg-logo="([^"]+)"/);
+            if (logoMatch) current.img = logoMatch[1];
+        }
+        else if (trimmed && !trimmed.startsWith('#') && current) {
+            current.source = trimmed;
+            result.push(current);
+            current = null;
+        }
+    }
+
+    tv = [...tv, ...result];
+}
+
+async function cargarM3u() {
+    try {
+        const response = await fetch('data/play.m3u');
+        const data = await response.text();
+        console.log('Datos m3u:', data);
+        m3u = data;
+    } catch (error) {
+        console.error('Error al cargar el JSON:', error);
+    }
+}
+
 async function cargarJSON() {
     try {
         const response = await fetch('data/channels.json');
         const data = await response.json();
-        console.log('Datos cargados:', data);
+        console.log('Datos json:', data);
         tv = data;
     } catch (error) {
         console.error('Error al cargar el JSON:', error);
@@ -162,6 +210,8 @@ if ("serviceWorker" in navigator) {
         }
 
         console.log("->INIT");
+
+        parseM3UToJSON();
         makeListTV();
     });
 } else {

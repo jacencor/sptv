@@ -2,24 +2,6 @@
 * Estilo 
 */
 
-* {
-    font-family: "Lato", sans-serif;
-}
-
-:root {
-    --main-pading: 0.25rem;
-    --body-pading: 1rem;
-    --bs-body-bg: #495057;
-    --bs-border-color: #212529;
-}
-
-/* BODY */
-body {
-    background:white;
-    margin: 0;
-    overflow: hidden;
-}
-
 /* MODAL */
 .modal-channel {
     position: absolute;
