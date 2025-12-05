@@ -311,41 +311,64 @@ const handleError = (error) => {
 // Inicializar PWA
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", async () => {
-        try {
-            // Registrar Service Worker
-            const registration = await navigator.serviceWorker.register("/serviceWorker.js");
-            console.log("Service Worker registrado...");
+        console.log("[INI-SW Iniciando registro forzado...");
 
-            // por si acaso se perdio la deteccion del update... reenviar el SkIP
-            if (registration.waiting) {
-                console.log("[Service Worker] Saltar espera");
-                registration.waiting.postMessage("SKIP_WAITING");
-            }
-            // Detectar el update y esprar instalar
+        try {
+            // 1. REGISTRAR 
+            const registration = await navigator.serviceWorker.register("/serviceWorker.js");
+
+            console.log("[INI-SW Registrado, versión:", registration.active?.scriptURL);
+
+            // 2. FORZAR CHECK DE UPDATE INMEDIATAMENTE
+            console.log("[INI-SW Forzando check de updates...");
+            await registration.update(); // ← Esto fuerza verificar si hay nueva versión
+
+            // 3. ESCUCHAR NUEVAS VERSIONES Y FORZAR ACTIVACIÓN
             registration.addEventListener("updatefound", () => {
-                console.log("[Service Worker] Actualización");
-                if (registration.installing) {
-                    //esperar a que el nuevo serviceworker.js entre a camellar
-                    registration.installing.addEventListener("statechange", () => {
-                        if (registration.waiting) {
-                            if (navigator.serviceWorker.controller) {
-                                console.log("[Service Worker] Saltar espera");
-                                registration.waiting.postMessage("SKIP_WAITING");
-                            } else {
-                                // primera instalaciín siga
-                                console.log("[Service Worker] Registrado por primera vez :P")
-                            }
+                console.log("[INI-SW ¡Nueva versión encontrada!");
+                const newWorker = registration.installing;
+
+                newWorker.addEventListener("statechange", () => {
+                    console.log(`[INI-SW Estado nuevo: ${newWorker.state}`);
+
+                    // Cuando se instala, forzar activación inmediata
+                    if (newWorker.state === "installed") {
+                        console.log("[INI-SW Forzando activación de nueva versión...");
+                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+
+                        // Recargar automáticamente para usar nueva versión
+                        /*setTimeout(() => {
+                            console.log("[INI-SW Recargando para nueva versión...");
+                            window.location.reload();
+                        }, 300);*/
+                    } else if (newWorker.state === "activated") {
+                        console.log("[Service Worker] Activado y listo");
+                        console.log("[INI-SW estado activado");
+                        if (navigator.serviceWorker.controller) {
+                            navigator.serviceWorker.controller.postMessage({
+                                type: 'SW_ACTIVATED'
+                            });
                         }
-                    });
-                }
+                    }
+                });
             });
 
-            // Inicializar aplicación
+            // 4. SI YA HABÍA UNA VERSIÓN ESPERANDO, ACTIVARLA
+            if (registration.waiting) {
+                console.log("[INI-SW Hay versión esperando, activando...");
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                //setTimeout(() => window.location.reload(), 300);
+            }
+
+            // 6. FORZAR QUE EL SW TOME CONTROL INMEDIATO
+            await navigator.serviceWorker.ready;
+            console.log("[INI-SW Listo y tomando control");
+
+            // 7. INICIAR APLICACIÓN
             await initApp();
 
         } catch (error) {
-            console.error("Error con Service Worker:", error);
-            // Inicializar aplicación sin Service Worker
+            console.error("[INI-SW Error crítico:", error);
             await initApp();
         }
     });
