@@ -201,12 +201,12 @@ async function cambiarCanal(channelIndex) {
         console.error('Error cambiando al canal...', error);
         const nextChannel = (channelIndex + 1) % tv.length;
 
-        if (nextChannel !== channelIndex) {
-            console.log('Intentando con siguiente canal...');
-            await cambiarCanal(nextChannel);
-        } else {
-            handlePlayerError(error);
-        }
+        // if (nextChannel !== channelIndex) {
+        //     console.log('Intentando con siguiente canal...');
+        //     await cambiarCanal(nextChannel);
+        // } else {
+        //     handlePlayerError(error);
+        // }
     }
 }
 

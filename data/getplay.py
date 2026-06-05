@@ -42,6 +42,8 @@ CINE_CHANNELS = [
     "Cine XOXO",
     "Cine Clásico",
     "Cine Premiere",
+    "Anime Vision",
+    "Anime Vision Classics"
 ]
 
 # 2. CANALES DE SERIES (EXPLÍCITOS)
@@ -114,28 +116,19 @@ ENTERTAINMENT_CHANNELS = [
     "Cuatro",
     "Divinity",
     # MÉXICO
-    "Azteca Uno",
-    "Azteca 7",
-    "Las Estrellas",
-    "Imagen Televisión",
-    "ADN 40",
-    "Foro TV",
-    "Multimedios",
-    # COLOMBIA
-    "Caracol TV",
-    "RCN TV",
-    "Señal Colombia",
-    "Canal Institucional",
+    "Las Estrellas (1080p)",
+    "Azteca Internacional (1080p)",
+    "ADN 40 (720p)",
     # ARGENTINA
-    "Telefe",
+    "America TV",
     "El Trece",
-    "América TV",
-    "TV Pública",
+    "Canal 7 Santiago del Estero",
     # CHILE
     "Mega",
     "Chilevisión",
-    "Canal 13",
+    "Canal 13 (1080p)",
     "TVN",
+    "ChileVision"
     "La Red",
     # PERÚ
     "América TV",
@@ -154,11 +147,11 @@ ENTERTAINMENT_CHANNELS = [
 INTERNATIONAL_CHANNELS = [
     "CGTN Español",
     "DW Español",
+    "DW Espanol"
     "France 24 Español",
     "Euronews Spanish",
     "BBC World News",
     "CNN International",
-    "Al Jazeera English",
     "RT en Español",
     "NHK World",
     "TV5Monde",
@@ -289,13 +282,13 @@ def download_and_filter():
                 if not found:
                     found = False
                     # 5. Entretenimiento
-                    # for ent in ENTERTAINMENT_CHANNELS:
-                    #    if matches_channel(name, ent):
-                    #        categorized["📢 CANALES DE ENTRETENIMIENTO GENERAL"].append(
-                    #            (name, current_extinf, line)
-                    #        )
-                    #        found = True
-                    #        break
+                    for ent in ENTERTAINMENT_CHANNELS:
+                        if matches_channel(name, ent):
+                            categorized["📢 CANALES DE ENTRETENIMIENTO GENERAL"].append(
+                                (name, current_extinf, line)
+                            )
+                            found = True
+                            break
 
                 if not found:
                     # 6. Internacionales
