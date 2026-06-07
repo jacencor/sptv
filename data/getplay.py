@@ -1,192 +1,163 @@
 #!/usr/bin/env python3
 """
-IPTV Filter - Versión PRECISA con listas explícitas
+IPTV Filter - Para archivo spa.txt
+Filtra por tvg-id, omite EXTVLCOPT, Geo-blocked y URLs con IP
 """
-
 import urllib.request
 import ssl
 import re
+import os
 
 # ============================================================
-# LISTAS EXPLÍCITAS DE CANALES (NO REGEX)
+# LISTA DE tvg-id DE LOS MEJORES CANALES (según recomendación)
 # ============================================================
 
-# 1. CANALES DE PELÍCULAS (EXPLÍCITOS)
-CINE_CHANNELS = [
-    "Cinecanal",
-    "Cine Sony",
-    "De Película",
-    "De Película Plus",
-    "HBO",
-    "HBO 2",
-    "HBO Plus",
-    "HBO Family",
-    "HBO Signature",
-    "TCM",
-    "FXM",
-    "AMC",
-    "Cinemax",
-    "Studio Universal",
-    "Film & Arts",
-    "FilmZone",
-    "Sony Movies",
-    "Warner TV",
-    "TNT Películas",
-    "Space",
-    "I.Sat",
-    "Golden Premier",
-    "Filmex",
-    "Filmex Clásico",
-    "Cine Adrenalina",
-    "Cine Terror",
-    "Cine XOXO",
-    "Cine Clásico",
-    "Cine Premiere",
-    "Anime Vision",
-    "Anime Vision Classics"
-]
-
-# 2. CANALES DE SERIES (EXPLÍCITOS)
-SERIES_CHANNELS = [
-    "Atreseries",
-    "FOX",
-    "FOX Life",
-    "FX",
-    "AXN",
-    "AXN White",
-    "AXN Movies",
-    "Warner TV",
-    "TNT Series",
-    "Syfy",
-    "Universal TV",
-    "E!",
-    "Studio Universal",
-    "Space",
-    "I.Sat",
-    "TBS",
-    "USA Network",
-    "TLC",
-    "Discovery Channel",
-    "Investigation Discovery",
-    "Distrito Comedia",
-    "Comedy Central",
-    "13 Teleseries",
-    "13 Realities",
-    "bitMe",
-    "Afizzionados",
-    "AFV en Español",
-]
-
-# 3. PLATAFORMAS ABIERTAS / FAST CHANNELS
-FAST_CHANNELS = [
-    "Pluto TV",
-    "Tubi",
-    "Xumo",
-    "Roku Channel",
-    "Samsung TV Plus",
-    "Freevee",
-    "Plex",
-    "Stirr",
-    "Peacock Free",
-    "The Roku Channel",
-    "Samsung TV Plus",
-    "Red Bull TV",
-    "Bloomberg Quicktake",
-    "Newsy",
-    "Classic Movies",
-    "Retro Crush",
-    "FilmRise",
-    "FailArmy",
-    "People Are Awesome",
-    "WeatherNation",
-    "CBN Español",
-    "Estrella TV",
-    "Estrella News",
-    "Estrella Games",
-    "BabyFirst",
-    "BabyFirst Spanish",
-]
-
-# 4. CANALES DE ENTRETENIMIENTO GENERAL (PRINCIPALES SOLO)
-ENTERTAINMENT_CHANNELS = [
-    # ESPAÑA
-    "Antena 3",
-    "Telecinco",
-    "La Sexta",
-    "Cuatro",
-    "Divinity",
-    # MÉXICO
-    "Las Estrellas (1080p)",
-    "Azteca Internacional (1080p)",
-    "ADN 40 (720p)",
+# Canales de Latinoamérica + Europa (los 50 mejores)
+MEJORES_TVG_IDS = [
     # ARGENTINA
-    "America TV",
-    "El Trece",
-    "Canal 7 Santiago del Estero",
+    "AmericaTV.ar",
+    "ElTrece.ar",
+    "Canal7TV.ar",
+    "Telefe.ar",
+    
     # CHILE
-    "Mega",
-    "Chilevisión",
-    "Canal 13 (1080p)",
-    "TVN",
-    "ChileVision"
-    "La Red",
+    "Canal13.cl",
+    "ChileVision.cl",
+    "TVN.cl",
+    "LaRed.cl",
+    "Mega.cl",
+    
+    # COLOMBIA
+    "Canal1.co",
+    "CanalCapital.co",
+    "SenalColombia.co",
+    "Teleantioquia.co",
+    "Telecaribe.co",
+    
+    # MÉXICO
+    "LasEstrellas.mx",
+    "AztecaUno.mx",
+    "Azteca7.mx",
+    "ADN40.mx",
+    "Canal22Nacional.mx",
+    "MultimediosMonterrey.mx",
+    "AztecaInternacional.mx",
+    
     # PERÚ
-    "América TV",
-    "Panamericana",
-    "Latina",
-    "TV Perú",
+    "Latina.pe",
+    "ATV.pe",
+    "TVPeru.pe",
+    
+    # ECUADOR
+    "Ecuavisa.ec",
+    "Teleamazonas.ec",
+    "RTS.ec",
+    
+    # BOLIVIA
+    "BoliviaTV.bo",
+    "RedUnoSantaCruz.bo",
+    "UnitelSantaCruz.bo",
+    
+    # PARAGUAY
+    "ParaguayTV.py",
+    "Telefuturo.py",
+    "Latele.py",
+    "SNT.py",
+    "Unicanal.py",
+    
     # REPÚBLICA DOMINICANA
-    "Telemicro",
-    "Color Visión",
-    "Telesistema",
-    "Antena 7",
-    "CDN",
+    "Telesistema11.do",
+    "Telemicro.do",
+    "ColorVision.do",
+    "CDN.do",
+    
+    # VENEZUELA
+    "Venevision.ve",
+    "VenevisionInternacional.ve",
+    
+    # ESPAÑA (los mejores)
+    "Antena3.es",
+    "Telecinco.es",
+    "LaSexta.es",
+    "Cuatro.es",
+    "La1.es",
+    "Canal24Horas.es",
+    "TV3.es",
+    "CanalSurAndalucia.es",
+    "AragonTV.es",
+    "Telemadrid.es",
+    
+    # PELÍCULAS Y SERIES (de tu lista)
+    "BomCine.es",
+    "CineSony.us",
+    "DePelicula.mx",
+    "Filmex.mx",
+    "AMCenEspanol.us",
+    "Atrescine.es",
+    "Atreseries.es",
+    "Energy.es",
+    "Nova.es",
+    "FDF.es",
+    "Neox.es",
+    "13Teleseries.cl",
+    "13Humor.cl",
+    "13Realities.cl",
+    "AnimeVision.es",
+    "AnimeVisionClassics.es",
+    "EnerGeek.cl",
+    "Kanade.cl",
+    "XtremaAccion.ar",
+    "XtremaTerror.ar",
+    "XtremaCineClasico.ar",
+    
+    # INTERNACIONALES
+    "CGTNEspanol.cn",
+    "DWEspanol.de",
+    "France24Espanol.fr",
+    "RTEspanol.ru",
+    "TVEInternacionalAmerica.es",
 ]
 
-# 5. CANALES INTERNACIONALES
-INTERNATIONAL_CHANNELS = [
-    "CGTN Español",
-    "DW Español",
-    "DW Espanol"
-    "France 24 Español",
-    "Euronews Spanish",
-    "BBC World News",
-    "CNN International",
-    "RT en Español",
-    "NHK World",
-    "TV5Monde",
-    "RAI Italia",
-    "TVE Internacional",
-    "Cubavisión Internacional",
-    "TV Pública",
+# ============================================================
+# PATRONES PARA EXCLUIR
+# ============================================================
+
+EXCLUDE_PATTERNS = [
+    r"#EXTVLCOPT",           # Líneas con EXTVLCOPT
+    r"Geo-blocked",          # Canales con geo-bloqueo
+    r"\[Geo-blocked\]",      # Misma condición
+    r"Not 24/7",             # Opcional: elimina si quieres
 ]
 
-# 6. TOP 10 RECOMENDADOS (LO MEJOR DE LO MEJOR)
-TOP_CHANNELS = [
-    "Cinecanal",
-    "Atreseries",
-    "HBO",
-    "FOX",
-    "Antena 3",
-    "Caracol TV",
-    "Telefe",
-    "Azteca Uno",
-    "CGTN Español",
-    "Pluto TV Cine Clásico",
-]
+# Patrón para detectar URL con IP (ej: http://45.184.109.10/...)
+IP_URL_PATTERN = r"https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+# ============================================================
+# PATRONES PARA EXCLUIR
+# ============================================================
 
+def limpiar_tvg_id(tvg_id_raw):
+    """
+    Limpia el tvg-id eliminando sufijos como @SD, @HD, @National, etc.
+    Ejemplos:
+        "AnimeVision.es@SD" -> "AnimeVision.es"
+        "Canal13.cl@National" -> "Canal13.cl"
+        "Antena3.es@SD" -> "Antena3.es"
+    """
+    # Eliminar todo lo que empiece con @
+    if "@" in tvg_id_raw:
+        return tvg_id_raw.split("@")[0]
+    return tvg_id_raw
 # ============================================================
 # FUNCIÓN PRINCIPAL
 # ============================================================
 
-
-def download_and_filter():
-    """Descarga y filtra la lista IPTV"""
-
+def filtrar_lista(archivo_salida="mejores_canales.m3u"):
+    """Filtra el archivo spa.txt y guarda solo los mejores canales"""
+    
     print("=" * 70)
-    print("IPTV FILTER - VERSIÓN PRECISA (LISTAS EXPLÍCITAS)")
+    print("FILTRANDO LISTA IPTV - MEJORES CANALES LATINOAMÉRICA + EUROPA")
     print("=" * 70)
-
+    
     # Configurar SSL
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
@@ -210,213 +181,193 @@ def download_and_filter():
     print("\n🔍 Parseando y filtrando canales...")
 
     lines = content.split("\n")
-
-    # Diccionario para almacenar canales por categoría
-    categorized = {
-        "🎬 CANALES DE PELÍCULAS": [],
-        "📺 CANALES DE SERIES": [],
-        "📡 PLATAFORMAS ABIERTAS / FAST CHANNELS": [],
-        "📢 CANALES DE ENTRETENIMIENTO GENERAL": [],
-        "🌐 CANALES INTERNACIONALES": [],
-        "⭐ TOP 10 RECOMENDADOS": [],
-    }
-
-    current_extinf = ""
-
-    for line in lines:
-        line = line.strip()
-
-        if line.startswith("#EXTINF:"):
-            current_extinf = line
-        elif line and not line.startswith("#") and current_extinf:
-            # Extraer nombre del canal
-            if "," in current_extinf:
-                raw_name = current_extinf.split(",")[-1].strip()
-
-                # Limpiar nombre
-                name = clean_channel_name(raw_name)
-
-                # Buscar en listas EXPLÍCITAS
-                found = False
-
-                # 1. TOP 10 primero
-                for top in TOP_CHANNELS:
-                    if matches_channel(name, top):
-                        categorized["⭐ TOP 10 RECOMENDADOS"].append(
-                            (name, current_extinf, line)
-                        )
-                        found = True
-                        break
-
-                if not found:
-                    # 2. Cine
-                    for cine in CINE_CHANNELS:
-                        if matches_channel(name, cine):
-                            categorized["🎬 CANALES DE PELÍCULAS"].append(
-                                (name, current_extinf, line)
-                            )
-                            found = True
+    
+    #with open(content, "r", encoding="utf-8") as f:
+    #   lines = f.readlines()
+    
+    print(f"📥 Archivo cargado: {len(lines)} líneas")
+    
+    # Diccionario para almacenar canales encontrados
+    canales_encontrados = {}
+    
+    i = 0
+    total_lines = len(lines)
+    excluidos_geo = 0
+    excluidos_extvlcopt = 0
+    excluidos_ip = 0
+    no_match = 0
+    
+    while i < total_lines:
+        line = lines[i].strip()
+        
+        if line.startswith("#EXTINF"):
+            extinf_line = line
+            
+            # Verificar Geo-blocked
+            if "Geo-blocked" in extinf_line or "[Geo-blocked]" in extinf_line:
+                excluidos_geo += 1
+                i += 1
+                continue
+            
+            # Buscar tvg-id (patrón original)
+            tvg_id_match = re.search(r'tvg-id="([^"]+)"', extinf_line)
+            
+            if tvg_id_match:
+                tvg_id_raw = tvg_id_match.group(1)
+                tvg_id_limpio = limpiar_tvg_id(tvg_id_raw)
+                
+                if tvg_id_limpio in MEJORES_TVG_IDS:
+                    
+                    # Verificar EXTVLCOPT en líneas siguientes
+                    tiene_extvlcopt = False
+                    j = i + 1
+                    while j < total_lines and not lines[j].strip().startswith("#EXTINF"):
+                        if "#EXTVLCOPT" in lines[j]:
+                            tiene_extvlcopt = True
+                            excluidos_extvlcopt += 1
                             break
-
-                if not found:
-                    # 3. Series
-                    for series in SERIES_CHANNELS:
-                        if matches_channel(name, series):
-                            categorized["📺 CANALES DE SERIES"].append(
-                                (name, current_extinf, line)
-                            )
-                            found = True
+                        j += 1
+                    
+                    if tiene_extvlcopt:
+                        i += 1
+                        continue
+                    
+                    # Obtener URL
+                    url_line = ""
+                    k = i + 1
+                    while k < total_lines:
+                        next_line = lines[k].strip()
+                        if next_line and not next_line.startswith("#"):
+                            url_line = next_line
                             break
-
-                if not found:
-                    found = False
-                    # 4. Fast channels
-                    # for fast in FAST_CHANNELS:
-                    #    if matches_channel(name, fast):
-                    #        categorized[
-                    #            "📡 PLATAFORMAS ABIERTAS / FAST CHANNELS"
-                    #        ].append((name, current_extinf, line))
-                    #        found = True
-                    #        break
-
-                if not found:
-                    found = False
-                    # 5. Entretenimiento
-                    for ent in ENTERTAINMENT_CHANNELS:
-                        if matches_channel(name, ent):
-                            categorized["📢 CANALES DE ENTRETENIMIENTO GENERAL"].append(
-                                (name, current_extinf, line)
-                            )
-                            found = True
-                            break
-
-                if not found:
-                    # 6. Internacionales
-                    for intl in INTERNATIONAL_CHANNELS:
-                        if matches_channel(name, intl):
-                            categorized["🌐 CANALES INTERNACIONALES"].append(
-                                (name, current_extinf, line)
-                            )
-                            found = True
-                            break
-
-            current_extinf = ""
-
-    # Generar archivo M3U
-    print("\n💾 Generando archivo M3U...")
-
-    output_lines = [
-        "#EXTM3U",
-        "# =========================================================",
-        "# CANALES IPTV FILTRADOS - VERSIÓN PRECISA",
-        "# Listas explícitas, sin regex ambiguas",
-        "# =========================================================",
-        "",
-    ]
-
-    total_channels = 0
-
-    for category, channels in categorized.items():
-        if channels:
-            # Ordenar alfabéticamente
-            channels.sort(key=lambda x: x[0].lower())
-
-            # Agregar sección
-            output_lines.extend([f"# {category}", "#" + "=" * 60, ""])
-
-            # Agregar canales
-            for name, extinf, url in channels:
-                output_lines.extend([extinf, url])
-                total_channels += 1
-
-            output_lines.append("")
-
-    # Guardar archivo
-    output_content = "\n".join(output_lines)
-
-    with open("precise_iptv.m3u", "w", encoding="utf-8") as f:
-        f.write(output_content)
-
-    # Mostrar estadísticas
+                        k += 1
+                    
+                    # Verificar URL con IP
+                    if url_line and re.match(IP_URL_PATTERN, url_line):
+                        excluidos_ip += 1
+                        i += 1
+                        continue
+                    
+                    # Guardar canal
+                    if tvg_id_limpio not in canales_encontrados:
+                        # Extraer nombre del canal (después de la última coma)
+                        nombre = extinf_line.split(",")[-1].strip() if "," in extinf_line else tvg_id_limpio
+                        # Limpiar etiquetas como [Not 24/7], [Geo-blocked], etc.
+                        nombre = re.sub(r"\[.*?\]", "", nombre).strip()
+                        # Limpiar resoluciones como (1080p)
+                        nombre = re.sub(r"\(\d+p\)", "", nombre).strip()
+                        
+                        canales_encontrados[tvg_id_limpio] = {
+                            "nombre": nombre,
+                            "extinf": extinf_line,
+                            "url": url_line,
+                            "tvg_id_raw": tvg_id_raw
+                        }
+                        print(f"   ✅ {nombre} ({tvg_id_raw})")
+                else:
+                    no_match += 1
+            else:
+                # Línea EXTINF sin tvg-id
+                pass
+            
+        i += 1
+    
+    # Generar archivo de salida
     print("\n" + "=" * 70)
-    print("✅ ¡LISTA GENERADA EXITOSAMENTE!")
+    print("💾 Generando archivo de salida...")
+    
+    output_lines = ["#EXTM3U", "# ========================================================="]
+    output_lines.append("# MEJORES CANALES - LATINOAMÉRICA + EUROPA")
+    output_lines.append("# =========================================================")
+    output_lines.append("")
+    
+    # Clasificar por país
+    categorias = {
+        "🇦🇷 Argentina": [],
+        "🇨🇱 Chile": [],
+        "🇨🇴 Colombia": [],
+        "🇲🇽 México": [],
+        "🇵🇪 Perú": [],
+        "🇪🇨 Ecuador": [],
+        "🇧🇴 Bolivia": [],
+        "🇵🇾 Paraguay": [],
+        "🇩🇴 República Dominicana": [],
+        "🇻🇪 Venezuela": [],
+        "🇪🇸 España": [],
+        "🎬 Películas y Series": [],
+        "🌐 Internacionales": [],
+    }
+    
+    for tvg_id, info in canales_encontrados.items():
+        if tvg_id.endswith(".ar"):
+            categorias["🇦🇷 Argentina"].append(info)
+        elif tvg_id.endswith(".cl"):
+            categorias["🇨🇱 Chile"].append(info)
+        elif tvg_id.endswith(".co"):
+            categorias["🇨🇴 Colombia"].append(info)
+        elif tvg_id.endswith(".mx"):
+            categorias["🇲🇽 México"].append(info)
+        elif tvg_id.endswith(".pe"):
+            categorias["🇵🇪 Perú"].append(info)
+        elif tvg_id.endswith(".ec"):
+            categorias["🇪🇨 Ecuador"].append(info)
+        elif tvg_id.endswith(".bo"):
+            categorias["🇧🇴 Bolivia"].append(info)
+        elif tvg_id.endswith(".py"):
+            categorias["🇵🇾 Paraguay"].append(info)
+        elif tvg_id.endswith(".do"):
+            categorias["🇩🇴 República Dominicana"].append(info)
+        elif tvg_id.endswith(".ve"):
+            categorias["🇻🇪 Venezuela"].append(info)
+        elif tvg_id.endswith(".es"):
+            categorias["🇪🇸 España"].append(info)
+        else:
+            categorias["🌐 Internacionales"].append(info)
+    
+    total_canales = 0
+    for categoria, canales in categorias.items():
+        if canales:
+            output_lines.append(f"\n# ========== {categoria} ({len(canales)} canales) ==========")
+            for canal in canales:
+                output_lines.append(canal["extinf"])
+                output_lines.append(canal["url"])
+                total_canales += 1
+    
+    with open(archivo_salida, "w", encoding="utf-8") as f:
+        f.write("\n".join(output_lines))
+    
+    # Estadísticas
+    print("\n" + "=" * 70)
+    print("✅ ¡FILTRADO COMPLETADO!")
     print("=" * 70)
     print(f"\n📊 ESTADÍSTICAS:")
-    print(f"   Archivo: precise_iptv.m3u")
-    print(f"   Canales totales: {total_channels}")
-    print(f"\n📋 DESGLOSE POR CATEGORÍA:")
-
-    for category, channels in categorized.items():
-        if channels:
-            print(f"\n   {category}: {len(channels)} canales")
-            print("   " + "-" * 40)
-
-            # Mostrar primeros 5 canales
-            for i, (name, _, _) in enumerate(channels[:5]):
-                print(f"   {i+1:2d}. {name[:45]}")
-
-            if len(channels) > 5:
-                print(f"   ... y {len(channels)-5} más")
-
+    print(f"   Archivo de salida: {archivo_salida}")
+    print(f"\n   ✅ Canales encontrados: {total_canales}")
+    print(f"\n   🔻 Excluidos por Geo-blocked: {excluidos_geo}")
+    print(f"   🔻 Excluidos por EXTVLCOPT: {excluidos_extvlcopt}")
+    print(f"   🔻 Excluidos por URL con IP: {excluidos_ip}")
+    print(f"   🔻 tvg-ids no encontrados en la lista blanca: {no_match}")
+    
+    print("\n📋 DESGLOSE:")
+    for categoria, canales in categorias.items():
+        if canales:
+            print(f"\n   {categoria}: {len(canales)} canales")
+            for c in canales[:3]:
+                print(f"      - {c['nombre'][:50]}")
+            if len(canales) > 3:
+                print(f"      ... y {len(canales)-3} más")
+    
     print("\n" + "=" * 70)
-    print("🎯 Canales PRECISOS, sin falsos positivos")
+    print("🎯 CANALES FILTRADOS CON CRITERIOS EXACTOS")
     print("=" * 70)
-
-
-def clean_channel_name(name):
-    """Limpia el nombre del canal"""
-    # Remover resoluciones
-    name = re.sub(r"\(\d+p\)", "", name)
-    name = re.sub(r"\d{3,4}p", "", name)
-
-    # Remover notas
-    name = re.sub(r"\[Not 24/7\]", "", name)
-    name = re.sub(r"\[Geo-blocked\]", "", name)
-    name = re.sub(r"\[.*?\]", "", name)
-
-    # Remover user-agent strings
-    name = re.sub(r'http-user-agent="[^"]+"', "", name)
-    name = re.sub(r"#EXTVLCOPT.*?,\s*", "", name)
-    name = re.sub(r"Mozilla/.*$", "", name)
-
-    # Limpiar espacios
-    name = re.sub(r"\s+", " ", name)
-    name = name.strip(' ,"')
-
-    return name
-
-
-def matches_channel(channel_name, target_name):
-    """
-    Compara si un canal coincide con un nombre objetivo.
-    Más inteligente que un simple 'in'.
-    """
-    channel_lower = channel_name.lower()
-    target_lower = target_name.lower()
-
-    # 1. Coincidencia exacta (sin espacios adicionales)
-    if target_lower == channel_lower:
-        return True
-
-    # 2. El nombre objetivo está contenido en el nombre del canal
-    # pero no como parte de otra palabra
-    if target_lower in channel_lower:
-        # Verificar que no sea parte de otra palabra
-        pattern = rf"\b{re.escape(target_lower)}\b"
-        if re.search(pattern, channel_lower):
-            return True
-
-    # 3. Para nombres cortos, verificar al inicio
-    if len(target_name) <= 10:
-        if channel_lower.startswith(target_lower):
-            return True
-
-    return False
-
 
 # ============================================================
 # EJECUCIÓN
 # ============================================================
 
 if __name__ == "__main__":
-    download_and_filter()
+    # Usar el archivo que compartiste
+    
+    # Si el archivo está en otra ruta, cámbiala
+    
+    filtrar_lista("mejores_canales.m3u")

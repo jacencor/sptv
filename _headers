@@ -1,0 +1,11 @@
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  
+/js/*
+  Content-Type: application/javascript
+
+/data/*.m3u
+  Content-Type: application/vnd.apple.mpegurl
+  Cache-Control: no-cache

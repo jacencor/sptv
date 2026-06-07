@@ -1,10 +1,10 @@
 #EXTM3U
-#EXTINF:-1 tvg-id="2.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuavisa.png" group-title="Todos",2 Ecuavisa
-https://jireh-1-hls-video-ar-isp.dps.live/hls-video/c54ac2799874375c81c1672abb700870537c5223/ecuavisa/ecuavisa.smil/playlist.m3u8
-#EXTINF:-1 tvg-id="5.ec" tvg-logo="https://sptv.netlify.app/img/ch/teleamazonas.png" group-title="Todos",5 Teleamazonas
-https://teleamazonas-live.cdn.vustreams.com/live/fd4ab346-b4e3-4628-abf0-b5a1bc192428/live.isml/fd4ab346-b4e3-4628-abf0-b5a1bc192428.m3u8
-#EXTINF:-1 tvg-id="13.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuadortv.png" group-title="Todos",13 EC TV
-https://samson.streamerr.co:8081/shogun/index.m3u8
+# =========================================================
+# MEJORES CANALES - LATINOAMÉRICA + EUROPA
+# =========================================================
+
+
+# ========== 🇦🇷 Argentina (1 canales) ==========
 #EXTINF:-1 tvg-id="Canal7TV.ar@SD" tvg-logo="https://i.imgur.com/iJMH0UK.png" group-title="Undefined",Canal 7 Santiago del Estero (720p)
 https://stream.arcast.com.ar/envivo/castv/playlist.m3u8
 #EXTINF:-1 tvg-id="13Humor.cl@SD" tvg-logo="https://i.imgur.com/KvMuTzN.png" group-title="Comedy",13 Humor (1080p)
