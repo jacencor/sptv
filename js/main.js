@@ -126,6 +126,12 @@ class SPTVApp {
             }, 2000);
         } else {
             this.notifications.showError('No hay más canales disponibles');
+            this.notifications.showError(`❌ Falló ${channel.name}, volviendo al inicio...`);
+            Logger.warn(`Falló ${channel.name}, volviendo al inicio...`);
+            index = 0;
+            setTimeout(() => {
+                this.changeChannel(index);
+            }, 2000);
         }
 
         this.isChangingChannel = false;

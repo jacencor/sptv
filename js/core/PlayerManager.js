@@ -95,7 +95,6 @@ export class PlayerManager {
                                 this.#handleGenericNetworkError();
                             }
                             break;
-                            break;
                         case window.Hls.ErrorTypes.MEDIA_ERROR:
                             this.notifications?.showWarning('Error en el stream, recuperando...');
                             Logger.warn('Corrupción de buffer, intentando recuperar el hilo de video...');
@@ -108,8 +107,8 @@ export class PlayerManager {
                             resolve(false);
                             break;
                     }
-                }else{
-                    Logger.log(`pasaba por aca`);
+                } else {
+                    Logger.log('Todo OK');
                     this.retryCount = 0;
                 }
             });
@@ -166,7 +165,6 @@ export class PlayerManager {
 
             setTimeout(() => {
                 if (this.hls) {
-                    // Destruir y recrear para asegurar limpieza completa
                     this.destroy();
                     this.loadChannel(this.currentChannel);
                 }

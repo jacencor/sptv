@@ -2,7 +2,7 @@ import { Logger } from '../utils/Logger.js';
 
 export class NotificationManager {
     static #instance = null;
-    
+
     constructor() {
         if (NotificationManager.#instance) return NotificationManager.#instance;
         this.loadingOverlay = document.getElementById('loadingOverlay');
@@ -35,7 +35,7 @@ export class NotificationManager {
      */
     showToast(message, type = 'danger', duration = 4000) {
         if (!this.toastContainer) return;
-
+        console.log('toast ?');
         const toastEl = document.createElement('div');
         toastEl.className = `toast align-items-center text-white bg-${type} border-0`;
         toastEl.setAttribute('role', 'alert');
@@ -54,13 +54,22 @@ export class NotificationManager {
         `;
 
         this.toastContainer.appendChild(toastEl);
-        const bsToast = new bootstrap.Toast(toastEl);
-        bsToast.show();
+        try {
+            const bsToast = new bootstrap.Toast(toastEl, {
+                autohide: true,
+                delay: duration
+            });
+            bsToast.show();
 
-        // Limpiar del DOM después de ocultar
-        toastEl.addEventListener('hidden.bs.toast', () => {
-            toastEl.remove();
-        });
+            // Limpiar del DOM después de ocultar
+            toastEl.addEventListener('hidden.bs.toast', () => {
+                toastEl.remove();
+            });
+        } catch (error) {
+            Logger.error('Error al crear toast:', error);
+            // Fallback: mostrar en consola
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
     }
 
     showError(message) {
