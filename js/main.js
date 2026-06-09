@@ -99,7 +99,6 @@ class SPTVApp {
         const channel = this.state.getCurrentChannel();
 
         Logger.log(`Cambiando a: ${channel.name}`);
-        this.notifications.showLoading();  // Mostrar spinner
 
         // Guardar en almacenamiento
         await OfflineStorage.saveLastChannel(channel, index);
@@ -111,7 +110,6 @@ class SPTVApp {
 
         // Cargar canal
         const success = await this.player.loadChannel(channel);
-        this.notifications.hideLoading(); // Ocultar spinner
 
         if (success) {
             this.notifications.showSuccess(`▶️ ${channel.name}`, 2000);

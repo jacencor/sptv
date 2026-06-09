@@ -39,18 +39,26 @@ export class PlayerManager {
 
         this.hls = new window.Hls({
             enableWorker: true,
-            lowLatencyMode: true,              // Reduce latencia (Live)
-            liveSyncDurationCount: 2,          // Mantener solo 2 fragmentos de sincronización
+            // lowLatencyMode: false, // Desactiva a menos que el backend use LL-HLS real
+            liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
+            liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
             maxBufferLength: bufferConfig.maxBuffer,
             maxMaxBufferLength: 30,
-            backBufferLength: 30,              // Libera memoria de segmentos viejos
-            startLevel: startLevel,                    // ABR automático
-            capLevelToPlayerSize: true,        // No pedir 4K si la pantalla es pequeña
-            abrEwmaDefaultEstimate: 5e5,       // Estimación inicial de ancho de banda (500kbps)
-            fragLoadingTimeOut: 10000,
+            backBufferLength: 10, // Libera memoria de segmentos viejos
+            startLevel: startLevel, // ABR automático
+            capLevelToPlayerSize: true, // No pedir 4K si la pantalla es pequeña
+            abrEwmaDefaultEstimate: 5e5, // Estimación inicial de ancho de banda (500kbps)
+            // Topes de reintentos para manifiestos (m3u8) y fragmentos (.ts)
+            manifestLoadingMaxRetry: 3,
+            manifestLoadingRetryDelay: 1000,
+            levelLoadingMaxRetry: 3,
             fragLoadingMaxRetry: 3,
-            manifestLoadingMaxRetry: 0,
+            fragLoadingRetryDelay: 1000,
+            // Tiempos máximos de espera (Timeout). Si un servidor no responde en 10s, abortar.
             manifestLoadingTimeOut: 10000,
+            fragLoadingTimeOut: 10000,
+            // Evita que el reproductor intente buscar infinitamente un fragmento perdido
+            maxFragLookUpTolerance: 0.2,
             abrMaxWithRealBitrate: true
         });
 
@@ -108,8 +116,41 @@ export class PlayerManager {
                             break;
                     }
                 } else {
-                    Logger.log('Todo OK');
-                    this.retryCount = 0;
+                    Logger.log('data.type: ' + data.type);
+                    Logger.log('data.details: ' + data.details);
+                    //this.retryCount = 0;
+                    Logger.log(`Aviso HLS (No fatal): ${data.details}`);
+
+                    if (data.details === 'fragLoadTimeOut' || data.details === 'levelLoadTimeOut') {
+                        this.retryCount++;
+
+                        if (this.retryCount >= this.maxRetries) {
+                            Logger.warn('Múltiples timeouts detectados. Forzando desatasco...');
+                            this.notifications?.showWarning('La señal origen está lenta, ajustando...');
+
+                            // Estrategia 1: Flush del buffer de red y recarga manual
+                            this.hls.stopLoad();
+
+                            setTimeout(() => {
+                                this.hls.startLoad();
+
+                                // Estrategia 2: El Nudge usando la referencia nativa de hls.js
+                                const media = this.hls.media;
+
+                                // Verificamos que el elemento multimedia exista y esté atascado
+                                if (media && (media.paused || media.readyState < 3)) {
+                                    media.currentTime += 0.1;
+                                    Logger.log('Nudge aplicado (+0.1s) para destrabar el buffer.');
+                                }
+                            }, 500);
+
+                            // Reseteamos para evaluar el siguiente ciclo
+                            this.retryCount = 0;
+                        }
+                    } else {
+                        // Resetear si entra un error distinto o se recupera
+                        this.retryCount = 0;
+                    }
                 }
             });
         });

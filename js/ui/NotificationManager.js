@@ -15,18 +15,6 @@ export class NotificationManager {
         return this.#instance;
     }
 
-    showLoading() {
-        if (this.loadingOverlay) {
-            this.loadingOverlay.style.display = 'flex';
-        }
-    }
-
-    hideLoading() {
-        if (this.loadingOverlay) {
-            this.loadingOverlay.style.display = 'none';
-        }
-    }
-
     /**
      * Muestra un toast
      * @param {string} message - Texto del mensaje
@@ -35,9 +23,15 @@ export class NotificationManager {
      */
     showToast(message, type = 'danger', duration = 4000) {
         if (!this.toastContainer) return;
-        console.log('toast ?');
+
+        Logger.log('=== DEBUG TOAST ===');
+        Logger.log('Mensaje:', message);
+        Logger.log('Contenedor existe?', !!this.toastContainer);
+        Logger.log('Bootstrap disponible?', typeof bootstrap !== 'undefined');
+        Logger.log('Tipo:', type);
+
         const toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center text-white bg-${type} border-0`;
+        toastEl.className = `toast align-items-center text-white text-bg-${type} border-0`;
         toastEl.setAttribute('role', 'alert');
         toastEl.setAttribute('aria-live', 'assertive');
         toastEl.setAttribute('aria-atomic', 'true');
@@ -49,13 +43,14 @@ export class NotificationManager {
                 <div class="toast-body">
                     <i class="fas ${this.#getIconByType(type)} me-2"></i> ${message}
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         `;
 
         this.toastContainer.appendChild(toastEl);
         try {
             const bsToast = new bootstrap.Toast(toastEl, {
+                animation: true,
                 autohide: true,
                 delay: duration
             });
@@ -68,7 +63,7 @@ export class NotificationManager {
         } catch (error) {
             Logger.error('Error al crear toast:', error);
             // Fallback: mostrar en consola
-            console.log(`[${type.toUpperCase()}] ${message}`);
+            Logger.info(`[${type.toUpperCase()}] ${message}`);
         }
     }
 
