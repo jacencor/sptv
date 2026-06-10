@@ -109,6 +109,7 @@ class SPTVApp {
         }
 
         // Cargar canal
+        this.player.retryCount = 0;
         const success = await this.player.loadChannel(channel);
 
         if (success) {
@@ -166,11 +167,12 @@ class SPTVApp {
 
         // Escuchar eventos de interacción (ratón, táctil, teclado) en toda la ventana
         // Usamos { passive: true } para optimizar el rendimiento del scroll/touch
-        window.addEventListener('mousemove', resetIdleTimer);
-        window.addEventListener('touchstart', resetIdleTimer, { passive: true });
-        window.addEventListener('click', resetIdleTimer);
-        window.addEventListener('keydown', resetIdleTimer);
+        // Delegación de eventos optimizada
+        const activeEvents = ['mousemove', 'mousedown', 'keydown'];
+        const passiveEvents = ['touchstart', 'touchmove', 'wheel'];
 
+        activeEvents.forEach(evt => window.addEventListener(evt, resetIdleTimer));
+        passiveEvents.forEach(evt => window.addEventListener(evt, resetIdleTimer, { passive: true }));
         // Disparar la primera vez para iniciar el ciclo
         resetIdleTimer();
     }

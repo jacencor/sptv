@@ -13,8 +13,12 @@ export class PlayerManager {
     }
 
     async init() {
-        if (!window.Hls || !window.Hls.isSupported()) {
-            Logger.error('HLS.js no es soportado nativamente en este entorno');
+        // Verificamos soporte nativo o de librería
+        const canPlayNative = this.video.canPlayType('application/vnd.apple.mpegurl');
+        const canPlayHlsJs = window.Hls && window.Hls.isSupported();
+
+        if (!canPlayNative && !canPlayHlsJs) {
+            Logger.error('HLS no es soportado en este navegador de ninguna forma.');
             return false;
         }
         return true;
@@ -27,27 +31,83 @@ export class PlayerManager {
         }
 
         this.currentChannel = channel;
-        if (this.video) {
-            this.video.poster = channel.img || 'img/app/error.png';
-        }
+        this.video.poster = channel.img || 'img/app/error.png';
+        this.destroy(); // Limpieza del buffer anterior
 
-        // Limpieza fundamental: liberar el buffer anterior antes de instanciar uno nuevo
-        this.destroy();
+        return new Promise((resolve) => {
+            this.loadPromiseResolve = resolve;
 
-        const bufferConfig = this.networkMonitor ? this.networkMonitor.getBufferConfig() : { maxBuffer: 20 };
-        const startLevel = bufferConfig.startLevel !== undefined ? bufferConfig.startLevel : -1;
+            // soporte HLS nativo (Safari, iOS o Chrome)
+            if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
+
+                Logger.log('Usando reproductor HLS nativo');
+
+                // Limpieza previa: Abortamos eventos de canales anteriores
+                if (this.nativeAbortController) {
+                    this.nativeAbortController.abort();
+                }
+                // Creamos un nuevo controlador para este canal específico
+                this.nativeAbortController = new AbortController();
+                const { signal } = this.nativeAbortController;
+
+                // Fundamental para que iOS no mande el video a pantalla completa automáticamente
+                this.video.playsInline = true;
+                this.video.src = channel.source;
+
+                // Timeout manual de 10 segundos (Evita el "Cuelgue Infinito" de Safari)
+                const nativeTimeout = setTimeout(() => {
+                    Logger.warn('Timeout nativo: Safari no pudo cargar el stream a tiempo.');
+                    this.nativeAbortController.abort(); // Matamos todos los listeners
+                    this.#handleNativeError({ code: 0, message: 'Timeout: Servidor no responde' });
+                    this.destroyAndResolve(false);
+                }, 10000);
+
+                // Evento de Éxito
+                this.video.addEventListener('loadedmetadata', () => {
+                    clearTimeout(nativeTimeout); // Cancelamos la guillotina del timeout
+
+                    this.video.play().catch(e => {
+                        Logger.warn('Autoplay nativo bloqueado. Requiere interacción:', e);
+                    });
+                    resolve(true);
+                }, { signal });
+
+                this.video.addEventListener('error', () => {
+                    clearTimeout(nativeTimeout);
+                    const err = this.video.error;
+                    this.#handleNativeError(err);
+                    this.destroyAndResolve(false);
+                }, { signal });
+
+                this.video.addEventListener('waiting', () => {
+                    Logger.warn('Conexión lenta, almacenando buffer...');
+                }, { signal });
+
+                this.video.addEventListener('stalled', () => {
+                    Logger.warn('El stream nativo se ha estancado (stalled).');
+                }, { signal });
+
+            } else if (window.Hls && window.Hls.isSupported()) {
+                Logger.log('Usando hls.js');
+                this.#initHlsJs(channel.source, resolve);
+            }
+        });
+    }
+
+    #initHlsJs(source, resolve) {
+        const bufferConfig = this.networkMonitor ? this.networkMonitor.getBufferConfig() : { maxBuffer: 20, startLevel: -1 };
 
         this.hls = new window.Hls({
             enableWorker: true,
+            maxBufferLength: bufferConfig.maxBuffer,
+            startLevel: bufferConfig.startLevel, // ABR automático activado
+            capLevelToPlayerSize: true, // Optimización de ancho de banda basado en viewport
+            abrEwmaDefaultEstimate: 5e5,
             // lowLatencyMode: false, // Desactiva a menos que el backend use LL-HLS real
             liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
             liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
-            maxBufferLength: bufferConfig.maxBuffer,
             maxMaxBufferLength: 30,
             backBufferLength: 10, // Libera memoria de segmentos viejos
-            startLevel: startLevel, // ABR automático
-            capLevelToPlayerSize: true, // No pedir 4K si la pantalla es pequeña
-            abrEwmaDefaultEstimate: 5e5, // Estimación inicial de ancho de banda (500kbps)
             // Topes de reintentos para manifiestos (m3u8) y fragmentos (.ts)
             manifestLoadingMaxRetry: 3,
             manifestLoadingRetryDelay: 1000,
@@ -64,159 +124,102 @@ export class PlayerManager {
 
         this.hls.attachMedia(this.video);
 
-        return new Promise((resolve) => {
-            this.loadPromiseResolve = resolve;
-
-            this.hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
-                this.hls.loadSource(channel.source);
-            });
-
-            this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                this.video.play().catch(e => Logger.warn('Autoplay bloqueado:', e));
-                resolve(true);
-            });
-
-            this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                const playPromise = this.video.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        Logger.warn('Auto-play bloqueado por el navegador. Requiere interacción del usuario.');
-                    });
-                }
-                resolve(true);
-            });
-
-            // Estrategia de auto-recuperación sin intervención del usuario
-            this.hls.on(window.Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    Logger.warn(`Error fatal HLS: ${data.type} - ${data.details}`);
-
-                    switch (data.type) {
-                        case window.Hls.ErrorTypes.NETWORK_ERROR:
-                            this.notifications?.showWarning('Problema de red, reintentando...');
-                            Logger.warn('Caída de red detectada, intentando reconexión de fragmentos...');
-                            if (data.details === 'manifestLoadTimeOut') {
-                                this.#handleManifestTimeout(channel.source);
-                            } else if (data.details === 'manifestLoadError') {
-                                this.#handleManifestLoadError(channel.source);
-                            } else {
-                                this.#handleGenericNetworkError();
-                            }
-                            break;
-                        case window.Hls.ErrorTypes.MEDIA_ERROR:
-                            this.notifications?.showWarning('Error en el stream, recuperando...');
-                            Logger.warn('Corrupción de buffer, intentando recuperar el hilo de video...');
-                            this.hls.recoverMediaError();
-                            break;
-                        default:
-                            this.notifications?.showError('Error crítico: no se puede reproducir este canal');
-                            Logger.error('Error crítico insalvable. Destruyendo instancia.');
-                            this.hls.destroy();
-                            resolve(false);
-                            break;
-                    }
-                } else {
-                    Logger.log('data.type: ' + data.type);
-                    Logger.log('data.details: ' + data.details);
-                    //this.retryCount = 0;
-                    Logger.log(`Aviso HLS (No fatal): ${data.details}`);
-
-                    if (data.details === 'fragLoadTimeOut' || data.details === 'levelLoadTimeOut') {
-                        this.retryCount++;
-
-                        if (this.retryCount >= this.maxRetries) {
-                            Logger.warn('Múltiples timeouts detectados. Forzando desatasco...');
-                            this.notifications?.showWarning('La señal origen está lenta, ajustando...');
-
-                            // Estrategia 1: Flush del buffer de red y recarga manual
-                            this.hls.stopLoad();
-
-                            setTimeout(() => {
-                                this.hls.startLoad();
-
-                                // Estrategia 2: El Nudge usando la referencia nativa de hls.js
-                                const media = this.hls.media;
-
-                                // Verificamos que el elemento multimedia exista y esté atascado
-                                if (media && (media.paused || media.readyState < 3)) {
-                                    media.currentTime += 0.1;
-                                    Logger.log('Nudge aplicado (+0.1s) para destrabar el buffer.');
-                                }
-                            }, 500);
-
-                            // Reseteamos para evaluar el siguiente ciclo
-                            this.retryCount = 0;
-                        }
-                    } else {
-                        // Resetear si entra un error distinto o se recupera
-                        this.retryCount = 0;
-                    }
-                }
-            });
-        });
-    }
-    // Carga el source y lleva conteo de reintentos
-    #loadSourceWithRetry(source, isRetry = false) {
-        if (isRetry) {
-            this.retryCount++;
-            Logger.log(`Reintentando cargar manifiesto (${this.retryCount}/${this.maxRetries})`);
-            this.notifications?.showWarning(`Reintentando (${this.retryCount}/${this.maxRetries})...`);
-        }
-
-        if (this.retryCount >= this.maxRetries) {
-            this.notifications?.showError(`No se pudo cargar ${this.currentChannel.name} después de ${this.maxRetries} intentos`);
-            this.destroyAndResolve(false);
-            return;
-        }
-
-        // Limpiar cualquier carga previa pendiente
-        if (this.hls) {
+        this.hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
             this.hls.loadSource(source);
-        }
+        });
+
+        this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+            this.video.play().catch(e => {
+                Logger.warn('Auto-play bloqueado por el navegador. Requiere interacción.');
+            });
+            resolve(true);
+        });
+
+        this.hls.on(window.Hls.Events.ERROR, (event, data) => this.#handleHlsError(data, source));
     }
 
-    #handleManifestLoadError(source) {
-        this.notifications?.showWarning('Error al cargar la lista de reproducción, reintentando...');
-        setTimeout(() => {
-            this.#loadSourceWithRetry(source, true);
-        }, 1000);
-    }
-
-    #handleGenericNetworkError() {
-        if (this.retryCount < this.maxRetries) {
+    #handleHlsError(data, source) {
+        if (data.fatal) {
+            Logger.error(`Error fatal HLS: ${data.type} - ${data.details}`);
             this.retryCount++;
-            this.notifications?.showWarning(`Problema de red (${this.retryCount}/${this.maxRetries}), reintentando...`);
-            setTimeout(() => {
-                if (this.hls) this.hls.startLoad();
-            }, 1000);
+
+            if (this.retryCount > this.maxRetries) {
+                Logger.error(`Límite de errores fatales (${this.maxRetries}) superado. Canal muerto.`);
+                this.notifications?.showError('Fallo definitivo: Imposible conectar con la señal de origen.');
+                this.destroyAndResolve(false);
+                return;
+            }
+
+            switch (data.type) {
+                case window.Hls.ErrorTypes.NETWORK_ERROR:
+                    this.notifications?.showWarning(`Red inestable (Intento ${this.retryCount}/${this.maxRetries}). Reconectando...`);
+                    setTimeout(() => {
+                        if (this.hls) { this.hls.loadSource(source); this.hls.startLoad(); }
+                    }, 2000);
+                    break;
+                case window.Hls.ErrorTypes.MEDIA_ERROR:
+                    this.notifications?.showWarning(`Fallo de video (Intento ${this.retryCount}/${this.maxRetries}). Limpiando buffer...`);
+                    this.hls.recoverMediaError();
+                    break;
+                default:
+                    this.notifications?.showError('Error crítico reproduciendo el canal.');
+                    this.destroyAndResolve(false);
+                    break;
+            }
         } else {
-            this.notifications?.showError(`Fallo definitivo de red para ${this.currentChannel.name}`);
-            this.destroyAndResolve(false);
-        }
-    }
-    #handleManifestTimeout(source) {
-        if (this.retryCount < this.maxRetries) {
-            this.retryCount++;
-            this.notifications?.showWarning(
-                `El servidor está tardando en responder (${this.retryCount}/${this.maxRetries}), reintentando...`
-            );
+            Logger.warn(`Error no faltal HLS: ${data.type} - ${data.details}`);
+            // Si entra un aviso no fatal (y no son timeouts), asumimos que el stream se estabilizó
+            if (data.details !== 'fragLoadTimeOut' && data.details !== 'levelLoadTimeOut') {
+                this.retryCount = 0;
+            }
 
-            // Tiempo de espera progresivo (exponential backoff)
-            const delay = Math.min(2000 * Math.pow(2, this.retryCount - 1), 1000);
-
-            setTimeout(() => {
-                if (this.hls) {
-                    this.destroy();
-                    this.loadChannel(this.currentChannel);
+            // ... (Aquí va la lógica de "Nudge" para desatascar streams lentos que ya tenías)
+            if (data.details === 'fragLoadTimeOut' || data.details === 'levelLoadTimeOut') {
+                this.retryCount++;
+                if (this.retryCount >= this.maxRetries) {
+                    this.hls.stopLoad();
+                    setTimeout(() => {
+                        this.hls.startLoad();
+                        if (this.video && (this.video.paused || this.video.readyState < 3)) {
+                            this.video.currentTime += 0.1; // Nudge
+                        }
+                    }, 500);
+                    this.retryCount = 0;
                 }
-            }, delay);
-        } else {
-            this.notifications?.showError(
-                `No se pudo cargar ${this.currentChannel.name} después de ${this.maxRetries} intentos (timeout)`
-            );
-            this.destroyAndResolve(false);
+            }
         }
     }
+
+    #handleNativeError(error) {
+        let errorMessage = 'Error crítico al reproducir la señal.';
+
+        if (error) {
+            if (error.code === 0 && error.message) {
+                errorMessage = error.message;
+            }
+            // Manejo de códigos nativos HTMLMediaError (Safari/iOS)
+            else {
+                switch (error.code) {
+                    case 1: // MEDIA_ERR_ABORTED
+                        errorMessage = 'La carga del canal fue cancelada.';
+                        break;
+                    case 2: // MEDIA_ERR_NETWORK
+                        errorMessage = 'Se perdió la conexión con el servidor de origen.';
+                        break;
+                    case 3: // MEDIA_ERR_DECODE
+                        errorMessage = 'El stream está corrupto o desincronizado.';
+                        break;
+                    case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
+                        errorMessage = 'El formato del canal no es compatible.';
+                        break;
+                }
+            }
+        }
+
+        Logger.error(`[Nativo] ${errorMessage}`);
+        this.notifications?.showError(`Señal perdida: ${errorMessage}`);
+    }
+
     destroyAndResolve(success) {
         this.destroy();
         if (this.loadPromiseResolve) {
@@ -224,10 +227,15 @@ export class PlayerManager {
             this.loadPromiseResolve = null;
         }
     }
+
     destroy() {
         if (this.hls) {
             this.hls.destroy();
             this.hls = null;
+        }
+        if (this.video) {
+            this.video.removeAttribute('src');
+            this.video.load();
         }
     }
 }

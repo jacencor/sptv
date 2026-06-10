@@ -24,12 +24,6 @@ export class NotificationManager {
     showToast(message, type = 'danger', duration = 4000) {
         if (!this.toastContainer) return;
 
-        Logger.log('=== DEBUG TOAST ===');
-        Logger.log('Mensaje:', message);
-        Logger.log('Contenedor existe?', !!this.toastContainer);
-        Logger.log('Bootstrap disponible?', typeof bootstrap !== 'undefined');
-        Logger.log('Tipo:', type);
-
         const toastEl = document.createElement('div');
         toastEl.className = `toast align-items-center text-white text-bg-${type} border-0`;
         toastEl.setAttribute('role', 'alert');
