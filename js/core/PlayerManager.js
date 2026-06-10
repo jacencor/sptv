@@ -116,15 +116,10 @@ export class PlayerManager {
                             break;
                     }
                 } else {
-                    Logger.log('data.type: ' + data.type);
-                    Logger.log('data.details: ' + data.details);
-                    //this.retryCount = 0;
-                    Logger.log(`Aviso HLS (No fatal): ${data.details}`);
-
+                    Logger.warn(`Error (No fatal) HLS: ${data.type} - ${data.details}`);
                     if (data.details === 'fragLoadTimeOut' || data.details === 'levelLoadTimeOut') {
                         this.retryCount++;
-
-                        if (this.retryCount >= this.maxRetries) {
+                        if (this.retryCount <= this.maxRetries) {
                             Logger.warn('Múltiples timeouts detectados. Forzando desatasco...');
                             this.notifications?.showWarning('La señal origen está lenta, ajustando...');
 
@@ -143,19 +138,13 @@ export class PlayerManager {
                                     Logger.log('Nudge aplicado (+0.1s) para destrabar el buffer.');
                                 }
                             }, 500);
-
-                            // Reseteamos para evaluar el siguiente ciclo
-                            this.retryCount = 0;
                         }
-                    } else {
-                        // Resetear si entra un error distinto o se recupera
-                        this.retryCount = 0;
                     }
                 }
             });
         });
     }
-    // Carga el source y lleva conteo de reintentos
+
     #loadSourceWithRetry(source, isRetry = false) {
         if (isRetry) {
             this.retryCount++;
@@ -168,8 +157,7 @@ export class PlayerManager {
             this.destroyAndResolve(false);
             return;
         }
-
-        // Limpiar cualquier carga previa pendiente
+        
         if (this.hls) {
             this.hls.loadSource(source);
         }
@@ -179,44 +167,59 @@ export class PlayerManager {
         this.notifications?.showWarning('Error al cargar la lista de reproducción, reintentando...');
         setTimeout(() => {
             this.#loadSourceWithRetry(source, true);
+        }, 2000);
+    }
+
+    #startLoadWithRetry(source, isRetry = false) {
+        if (isRetry) {
+            this.retryCount++;
+            Logger.log(`Reintentando cargar manifiesto (${this.retryCount}/${this.maxRetries})`);
+            this.notifications?.showWarning(`Reintentando (${this.retryCount}/${this.maxRetries})...`);
+        }
+
+        if (this.retryCount >= this.maxRetries) {
+            this.notifications?.showError(`No se pudo cargar ${this.currentChannel.name} después de ${this.maxRetries} intentos`);
+            this.destroyAndResolve(false);
+            return;
+        }
+        
+        if (this.hls) {
+            this.hls.startLoad(source);
+        }
+    }
+
+    #handleGenericNetworkError(source) {
+        this.notifications?.showWarning('Error al cargar la lista de reproducción, reintentando...');
+        setTimeout(() => {
+            this.#startLoadWithRetry(source, true);
+        }, 2000);
+    }
+
+    #loadChannelWithRetry(source, isRetry = false) {
+        if (isRetry) {
+            this.retryCount++;
+            Logger.log(`Reintentando cargar manifiesto (${this.retryCount}/${this.maxRetries})`);
+            this.notifications?.showWarning(`Reintentando (${this.retryCount}/${this.maxRetries})...`);
+        }
+
+        if (this.retryCount >= this.maxRetries) {
+            this.notifications?.showError(`No se pudo cargar ${this.currentChannel.name} después de ${this.maxRetries} intentos`);
+            this.destroyAndResolve(false);
+            return;
+        }
+        
+        if (this.hls) {
+            this.loadChannel(this.currentChannel);
+        }
+    }
+
+    #handleManifestTimeout(source) {
+        this.notifications?.showWarning('Error al cargar la lista de reproducción, reintentando...');
+        setTimeout(() => {
+            this.#loadChannelWithRetry(source, true);
         }, 1000);
     }
 
-    #handleGenericNetworkError() {
-        if (this.retryCount < this.maxRetries) {
-            this.retryCount++;
-            this.notifications?.showWarning(`Problema de red (${this.retryCount}/${this.maxRetries}), reintentando...`);
-            setTimeout(() => {
-                if (this.hls) this.hls.startLoad();
-            }, 1000);
-        } else {
-            this.notifications?.showError(`Fallo definitivo de red para ${this.currentChannel.name}`);
-            this.destroyAndResolve(false);
-        }
-    }
-    #handleManifestTimeout(source) {
-        if (this.retryCount < this.maxRetries) {
-            this.retryCount++;
-            this.notifications?.showWarning(
-                `El servidor está tardando en responder (${this.retryCount}/${this.maxRetries}), reintentando...`
-            );
-
-            // Tiempo de espera progresivo (exponential backoff)
-            const delay = Math.min(2000 * Math.pow(2, this.retryCount - 1), 1000);
-
-            setTimeout(() => {
-                if (this.hls) {
-                    this.destroy();
-                    this.loadChannel(this.currentChannel);
-                }
-            }, delay);
-        } else {
-            this.notifications?.showError(
-                `No se pudo cargar ${this.currentChannel.name} después de ${this.maxRetries} intentos (timeout)`
-            );
-            this.destroyAndResolve(false);
-        }
-    }
     destroyAndResolve(success) {
         this.destroy();
         if (this.loadPromiseResolve) {
@@ -224,6 +227,7 @@ export class PlayerManager {
             this.loadPromiseResolve = null;
         }
     }
+
     destroy() {
         if (this.hls) {
             this.hls.destroy();

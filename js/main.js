@@ -109,8 +109,10 @@ class SPTVApp {
         }
 
         // Cargar canal
+        this.player.retryCount = 0;
         const success = await this.player.loadChannel(channel);
 
+        Logger.log(`Exito: `+success);
         if (success) {
             this.notifications.showSuccess(`▶️ ${channel.name}`, 2000);
             if (this.sidebar) {
