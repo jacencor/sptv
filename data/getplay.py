@@ -28,11 +28,7 @@ MEJORES_TVG_IDS = [
     "Mega.cl",
     
     # COLOMBIA
-    "Canal1.co",
-    "CanalCapital.co",
-    "SenalColombia.co",
-    "Teleantioquia.co",
-    "Telecaribe.co",
+    "RCNMas.co",
     
     # MÉXICO
     "LasEstrellas.mx",
