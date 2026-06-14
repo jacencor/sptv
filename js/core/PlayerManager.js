@@ -37,8 +37,10 @@ export class PlayerManager {
         return new Promise((resolve) => {
             this.loadPromiseResolve = resolve;
 
-            // soporte HLS nativo (Safari, iOS o Chrome)
-            if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
+            if (window.Hls && window.Hls.isSupported()) {
+                Logger.log('Usando hls.js');
+                this.#initHlsJs(channel.source, resolve);
+            } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
 
                 Logger.log('Usando reproductor HLS nativo');
 
@@ -87,9 +89,6 @@ export class PlayerManager {
                     Logger.warn('El stream nativo se ha estancado (stalled).');
                 }, { signal });
 
-            } else if (window.Hls && window.Hls.isSupported()) {
-                Logger.log('Usando hls.js');
-                this.#initHlsJs(channel.source, resolve);
             }
         });
     }
