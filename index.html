@@ -6,6 +6,8 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
+    <meta name="description" content="Reproductor simple de listas IPTV">
+    <link rel="apple-touch-icon" href="img/ico/icon-512x512.png">
     <link rel="manifest" href="manifest.json">
     <title>SPTV - Simple TV</title>
 
@@ -28,15 +30,27 @@
         </div>
     </div>
 
-    <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-black">
+    <div class="w-100 h-100 d-flex justify-content-center align-items-center bg-black position-relative">
         <button id="openSidebar"
             class="btn btn-dark position-absolute top-0 start-0 m-3 z-3 shadow-sm border border-secondary"
             data-bs-toggle="offcanvas" data-bs-target="#sidebarChannels">
             <i class="fa fa-bars"></i>
         </button>
 
+        <!-- Cast Button -->
+        <div class="position-absolute top-0 end-0 m-3 z-3">
+            <google-cast-launcher style="width: 40px; height: 40px; cursor: pointer; --connected-color: white; --disconnected-color: rgba(255,255,255,0.7);"></google-cast-launcher>
+        </div>
+
         <video id="video" class="w-100 h-100 object-fit-contain" controls autoplay playsinline
             poster="img/app/error.png"></video>
+
+        <!-- Cast Overlay -->
+        <div id="castOverlay" class="position-absolute w-100 h-100 bg-black d-flex flex-column justify-content-center align-items-center d-none z-2">
+            <i class="fa-brands fa-chromecast text-secondary mb-3" style="font-size: 5rem;"></i>
+            <h3 class="text-white">Transmitiendo a TV</h3>
+            <p id="castChannelName" class="text-secondary mt-2"></p>
+        </div>
     </div>
 
     <!-- Contenedor de toasts (solo se queda el z-index, pero los estilos de posición ya están en Bootstrap) -->
@@ -45,6 +59,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <!-- SDK de Google Cast -->
+    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
     <script defer type="module" src="js/main.js"></script>
 </body>
 

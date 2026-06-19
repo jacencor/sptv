@@ -10,6 +10,11 @@ export class PlayerManager {
         this.retryCount = 0;
         this.maxRetries = 3;
         this.loadPromiseResolve = null;
+        this.isCasting = false;
+        
+        // Elementos UI para Cast
+        this.castOverlay = document.getElementById('castOverlay');
+        this.castChannelName = document.getElementById('castChannelName');
     }
 
     async init() {
@@ -32,15 +37,15 @@ export class PlayerManager {
 
         this.currentChannel = channel;
         this.video.poster = channel.img || 'img/app/error.png';
-        this.destroy(); // Limpieza del buffer anterior
+        this.stopCurrentPlayback(); // Limpieza suave del buffer anterior
 
         return new Promise((resolve) => {
+            if (this.loadPromiseResolve) {
+                this.loadPromiseResolve(false); // Cancela la carga anterior limpiamente
+            }
             this.loadPromiseResolve = resolve;
 
-            if (window.Hls && window.Hls.isSupported()) {
-                Logger.log('Usando hls.js');
-                this.#initHlsJs(channel.source, resolve);
-            } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
+            if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
 
                 Logger.log('Usando reproductor HLS nativo');
 
@@ -89,52 +94,64 @@ export class PlayerManager {
                     Logger.warn('El stream nativo se ha estancado (stalled).');
                 }, { signal });
 
+            } else if (window.Hls && window.Hls.isSupported()) {
+                Logger.log('Usando hls.js');
+                this.#initHlsJs(channel.source);
             }
         });
     }
 
-    #initHlsJs(source, resolve) {
-        const bufferConfig = this.networkMonitor ? this.networkMonitor.getBufferConfig() : { maxBuffer: 20, startLevel: -1 };
+    #initHlsJs(source) {
+        if (!this.hls) {
+            const bufferConfig = this.networkMonitor ? this.networkMonitor.getBufferConfig() : { maxBuffer: 20, startLevel: -1 };
 
-        this.hls = new window.Hls({
-            enableWorker: true,
-            maxBufferLength: bufferConfig.maxBuffer,
-            startLevel: bufferConfig.startLevel, // ABR automático activado
-            capLevelToPlayerSize: true, // Optimización de ancho de banda basado en viewport
-            abrEwmaDefaultEstimate: 5e5,
-            // lowLatencyMode: false, // Desactiva a menos que el backend use LL-HLS real
-            liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
-            liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
-            maxMaxBufferLength: 30,
-            backBufferLength: 10, // Libera memoria de segmentos viejos
-            // Topes de reintentos para manifiestos (m3u8) y fragmentos (.ts)
-            manifestLoadingMaxRetry: 3,
-            manifestLoadingRetryDelay: 1000,
-            levelLoadingMaxRetry: 3,
-            fragLoadingMaxRetry: 3,
-            fragLoadingRetryDelay: 1000,
-            // Tiempos máximos de espera (Timeout). Si un servidor no responde en 10s, abortar.
-            manifestLoadingTimeOut: 10000,
-            fragLoadingTimeOut: 10000,
-            // Evita que el reproductor intente buscar infinitamente un fragmento perdido
-            maxFragLookUpTolerance: 0.2,
-            abrMaxWithRealBitrate: true
-        });
-
-        this.hls.attachMedia(this.video);
-
-        this.hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
-            this.hls.loadSource(source);
-        });
-
-        this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-            this.video.play().catch(e => {
-                Logger.warn('Auto-play bloqueado por el navegador. Requiere interacción.');
+            this.hls = new window.Hls({
+                enableWorker: true,
+                maxBufferLength: bufferConfig.maxBuffer,
+                startLevel: bufferConfig.startLevel, // ABR automático activado
+                capLevelToPlayerSize: true, // Optimización de ancho de banda basado en viewport
+                abrEwmaDefaultEstimate: 5e5,
+                // lowLatencyMode: false, // Desactiva a menos que el backend use LL-HLS real
+                liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
+                liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
+                maxMaxBufferLength: 30,
+                backBufferLength: 10, // Libera memoria de segmentos viejos
+                // Topes de reintentos para manifiestos (m3u8) y fragmentos (.ts)
+                manifestLoadingMaxRetry: 3,
+                manifestLoadingRetryDelay: 1000,
+                levelLoadingMaxRetry: 3,
+                fragLoadingMaxRetry: 3,
+                fragLoadingRetryDelay: 1000,
+                // Tiempos máximos de espera (Timeout). Si un servidor no responde en 10s, abortar.
+                manifestLoadingTimeOut: 10000,
+                fragLoadingTimeOut: 10000,
+                // Evita que el reproductor intente buscar infinitamente un fragmento perdido
+                maxFragLookUpTolerance: 0.2,
+                abrMaxWithRealBitrate: true
             });
-            resolve(true);
-        });
 
-        this.hls.on(window.Hls.Events.ERROR, (event, data) => this.#handleHlsError(data, source));
+            this.hls.attachMedia(this.video);
+
+            this.hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+                Logger.log('HLS Media attached');
+            });
+
+            this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                this.video.play().catch(e => {
+                    Logger.warn('Auto-play bloqueado por el navegador. Requiere interacción.');
+                });
+                if (this.loadPromiseResolve) {
+                    this.loadPromiseResolve(true);
+                    this.loadPromiseResolve = null;
+                }
+            });
+
+            this.hls.on(window.Hls.Events.ERROR, (event, data) => this.#handleHlsError(data, this.currentChannel?.source));
+        } else {
+            this.hls.stopLoad(); // Frenar descargas del canal viejo si se reutiliza
+        }
+
+        this.hls.loadSource(source);
     }
 
     #handleHlsError(data, source) {
@@ -219,8 +236,45 @@ export class PlayerManager {
         this.notifications?.showError(`Señal perdida: ${errorMessage}`);
     }
 
+    setCastMode(isCasting, channelName = '') {
+        this.isCasting = isCasting;
+        
+        if (isCasting) {
+            // Pausar video local
+            this.stopCurrentPlayback();
+            if (this.video) this.video.pause();
+            
+            // Mostrar Overlay
+            if (this.castOverlay) {
+                this.castOverlay.classList.remove('d-none');
+                if (this.castChannelName) {
+                    this.castChannelName.textContent = channelName;
+                }
+            }
+        } else {
+            // Ocultar Overlay
+            if (this.castOverlay) {
+                this.castOverlay.classList.add('d-none');
+            }
+            
+            // Si el usuario desconecta, recargamos el canal localmente
+            if (this.currentChannel) {
+                this.loadChannel(this.currentChannel);
+            }
+        }
+    }
+
+    stopCurrentPlayback() {
+        if (this.hls) {
+            this.hls.stopLoad();
+            // No destruimos HLS ni removemos el src del video para evitar flasheos negros
+        }
+        // Para nativo (Safari), no quitamos el src explícitamente al hacer zapping 
+        // para que la transición sea más suave.
+    }
+
     destroyAndResolve(success) {
-        this.destroy();
+        this.stopCurrentPlayback();
         if (this.loadPromiseResolve) {
             this.loadPromiseResolve(success);
             this.loadPromiseResolve = null;

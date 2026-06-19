@@ -61,6 +61,54 @@ export class NotificationManager {
         }
     }
 
+    showUpdateToast(onUpdateCallback) {
+        if (!this.toastContainer) return;
+
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center text-white text-bg-primary border-0`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+        toastEl.setAttribute('data-bs-autohide', 'false'); // No ocultar auto
+
+        toastEl.innerHTML = `
+            <div class="toast-body d-flex flex-column">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-download me-2"></i> 
+                    <strong>Nueva versión disponible</strong>
+                </div>
+                <div>Una nueva versión de SPTV está lista para instalarse.</div>
+                <div class="mt-2 pt-2 border-top">
+                    <button type="button" class="btn btn-light btn-sm w-100 fw-bold" id="btnUpdatePwa">Actualizar Ahora</button>
+                    <button type="button" class="btn btn-link btn-sm text-white w-100 text-decoration-none mt-1" data-bs-dismiss="toast">Quizás más tarde</button>
+                </div>
+            </div>
+        `;
+
+        this.toastContainer.appendChild(toastEl);
+        
+        toastEl.querySelector('#btnUpdatePwa').addEventListener('click', (e) => {
+            const btn = e.target;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Actualizando...';
+            btn.disabled = true;
+            onUpdateCallback();
+        });
+
+        try {
+            const bsToast = new bootstrap.Toast(toastEl, {
+                animation: true,
+                autohide: false
+            });
+            bsToast.show();
+
+            toastEl.addEventListener('hidden.bs.toast', () => {
+                toastEl.remove();
+            });
+        } catch (error) {
+            Logger.error('Error al crear toast de update:', error);
+        }
+    }
+
     showError(message) {
         Logger.error(message);
         this.showToast(message, 'danger');

@@ -1,11 +1,14 @@
 {
     "name": "Simple TV",
     "short_name": "SPTV",
-    "start_url": "index.html",
+    "description": "Reproductor simple de listas IPTV",
+    "start_url": "./",
+    "id": "/sptv/",
     "display": "standalone",
     "background_color": "#212529",
     "theme_color": "#212529",
     "orientation": "landscape-primary",
+    "categories": ["entertainment", "video"],
     "icons": [
         { "src": "img/ico/icon-16x16.png", "sizes": "16x16", "type": "image/png" },
         { "src": "img/ico/icon-24x24.png", "sizes": "24x24", "type": "image/png" },
@@ -13,6 +16,6 @@
         { "src": "img/ico/icon-64x64.png", "sizes": "64x64", "type": "image/png" },
         { "src": "img/ico/icon-128x128.png", "sizes": "128x128", "type": "image/png" },
         { "src": "img/ico/icon-256x256.png", "sizes": "256x256", "type": "image/png" },
-        { "src": "img/ico/icon-512x512.png", "sizes": "512x512", "type": "image/png" }
+        { "src": "img/ico/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
     ]
 }

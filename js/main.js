@@ -6,6 +6,7 @@ import { OfflineStorage } from './core/OfflineStorage.js';
 import { SidebarUI } from './ui/SidebarUI.js';
 import { AppState } from './core/AppState.js';
 import { NotificationManager } from './ui/NotificationManager.js';
+import { CastManager } from './core/CastManager.js';
 
 // Al inicio de main.js, asegurar que el SW se actualice
 if ('serviceWorker' in navigator) {
@@ -14,16 +15,45 @@ if ('serviceWorker' in navigator) {
             const registration = await navigator.serviceWorker.register('/serviceWorker.js');
             console.log('[SPTV] Service Worker registrado');
 
-            // Forzar actualización
+            // Forzar actualización al cargar
             await registration.update();
 
-            // Escuchar cambios
+            // Escuchar cuando el nuevo ServiceWorker tome el control para recargar la página
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
+
+            // Función para mostrar el toast de actualización
+            const showUpdatePrompt = (worker) => {
+                const notifications = NotificationManager.getInstance();
+                notifications.showUpdateToast(() => {
+                    // Le decimos al SW que se active
+                    worker.postMessage('SKIP_WAITING');
+                    worker.postMessage({ type: 'SKIP_WAITING' }); // Alternativa común
+                });
+            };
+
+            // 1. Si hay un SW esperando (el usuario recargó la página sin actualizar)
+            if (registration.waiting) {
+                showUpdatePrompt(registration.waiting);
+            }
+
+            // 2. Escuchar cambios de estado en nuevas actualizaciones (cuando la app está abierta)
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                        console.log('[SPTV] Nueva versión del SW disponible');
-                        // Opcional: notificar al usuario
+                    if (newWorker.state === 'installed') {
+                        if (navigator.serviceWorker.controller) {
+                            // Hay una actualización disponible
+                            console.log('[SPTV] Nueva versión del SW disponible, esperando confirmación');
+                            showUpdatePrompt(newWorker);
+                        } else {
+                            console.log('[SPTV] App lista para trabajar offline');
+                        }
                     }
                 });
             });
@@ -41,6 +71,7 @@ class SPTVApp {
         this.notifications = NotificationManager.getInstance();
         this.player = null;
         this.sidebar = null;
+        this.castManager = null;
         this.isChangingChannel = false; // Evitar cambios múltiples
     }
 
@@ -60,6 +91,12 @@ class SPTVApp {
         const videoEl = document.getElementById('video');
         this.player = new PlayerManager(videoEl, this.networkMonitor, this.notifications);
         await this.player.init();
+
+        this.castManager = new CastManager((isConnected, channel) => {
+            if (this.player) {
+                this.player.setCastMode(isConnected, channel ? channel.name : '');
+            }
+        });
 
         this.sidebar = new SidebarUI(
             (idx) => this.changeChannel(idx)
@@ -108,7 +145,22 @@ class SPTVApp {
             this.sidebar.render(this.state.channels, index);
         }
 
-        // Cargar canal
+        // Si estamos casteando, lo enviamos al Chromecast y marcamos éxito
+        if (this.castManager && this.castManager.isCastAvailable) {
+            const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+            if (castSession) {
+                this.castManager.castChannel(channel);
+                this.player.setCastMode(true, channel.name);
+                this.notifications.showSuccess(`▶️ (TV) ${channel.name}`, 2000);
+                if (this.sidebar) {
+                    this.sidebar.close();
+                }
+                this.isChangingChannel = false;
+                return;
+            }
+        }
+
+        // Cargar canal localmente
         this.player.retryCount = 0;
         const success = await this.player.loadChannel(channel);
 
