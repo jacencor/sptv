@@ -1,14 +1,116 @@
+/* ============================================
+   SPTV Design System — Bootstrap 5 CSS Variables
+   ============================================ */
+
+/* --- 1. Global Theme Overrides --- */
+:root {
+    --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --bs-border-radius-lg: 0.75rem;
+    --sptv-transition: 0.2s ease;
+    --sptv-shadow-soft: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+    --sptv-glass-bg: rgba(15, 15, 15, 0.92);
+    --sptv-glass-blur: blur(12px);
+}
+
+[data-bs-theme="dark"] {
+    --bs-body-bg: #000;
+    --bs-primary: #4d9fff;
+    --bs-primary-rgb: 77, 159, 255;
+}
+
+/* --- 2. Base --- */
 body {
-    background-color: #000;
+    background-color: var(--bs-body-bg, #000);
     overflow: hidden;
 }
 
+/* --- 3. Offcanvas / Sidebar (Glassmorphism) --- */
 .offcanvas {
-    background-color: rgba(15, 15, 15, 0.95) !important;
-    backdrop-filter: blur(10px);
+    background-color: var(--sptv-glass-bg) !important;
+    backdrop-filter: var(--sptv-glass-blur);
+    -webkit-backdrop-filter: var(--sptv-glass-blur);
+    box-shadow: var(--sptv-shadow-soft);
 }
 
-/* Scrollbar discreto para el menú */
+/* Sidebar channel items — Soft UI hover */
+.list-group-item {
+    transition: background-color var(--sptv-transition);
+}
+
+.list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.channel-active {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    font-weight: bold;
+}
+
+.channel-thumb {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+/* --- 4. Menu Button (min 44×44px para accesibilidad SC 2.5.8) --- */
+.menu-btn {
+    min-width: 44px;
+    min-height: 44px;
+    transition: opacity var(--sptv-transition), box-shadow var(--sptv-transition);
+}
+
+.menu-btn:hover {
+    box-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.15);
+}
+
+.menu-btn--idle {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* --- 5. Cast --- */
+.cast-launcher {
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    --connected-color: white;
+    --disconnected-color: rgba(255, 255, 255, 0.7);
+}
+
+.cast-icon {
+    font-size: 5rem;
+}
+
+/* --- 6. Toast Refinement (Soft UI shadows) --- */
+.toast {
+    box-shadow: var(--sptv-shadow-soft);
+}
+
+/* --- 7. Accessibility (WCAG 2.1 AA) --- */
+
+/* SC 2.4.7 — Foco visible: anillo de 3px para navegación por teclado */
+:focus-visible {
+    outline: 3px solid var(--bs-primary, #4d9fff);
+    outline-offset: 2px;
+}
+
+/* Quitar outline para clicks de ratón */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* SC 2.3.3 — Movimiento reducido: desactivar transiciones y animaciones */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* --- 8. Scrollbar discreto --- */
 ::-webkit-scrollbar {
     width: 6px;
 }

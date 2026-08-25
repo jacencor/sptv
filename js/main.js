@@ -5,6 +5,12 @@ import { SidebarUI } from './ui/SidebarUI.js';
 import { notifications } from './ui/NotificationManager.js';
 import { CastManager } from './core/CastManager.js';
 
+// Interceptar callback del Cast SDK antes de que el SDK termine de cargar.
+// Debe estar en el scope global del módulo para ganar la carrera contra el SDK.
+window.__onGCastApiAvailable = (isAvailable) => {
+    window.__castApiReady = isAvailable;
+};
+
 // Al inicio de main.js, asegurar que el SW se actualice
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
@@ -206,8 +212,7 @@ class SPTVApp {
             if (!menuBtn) return;
 
             // 1. Mostrar el botón inmediatamente
-            menuBtn.style.opacity = '1';
-            menuBtn.style.pointerEvents = 'auto'; // Permitir clics nuevamente
+            menuBtn.classList.remove('menu-btn--idle');
 
             // 2. Limpiar el temporizador anterior
             clearTimeout(idleTimeout);
@@ -220,8 +225,7 @@ class SPTVApp {
 
                 // Ocultar solo si el sidebar está cerrado
                 if (!isSidebarOpen) {
-                    menuBtn.style.opacity = '0';
-                    menuBtn.style.pointerEvents = 'none'; // Evitar clics fantasmas cuando está invisible
+                    menuBtn.classList.add('menu-btn--idle');
                 }
             }, idleTime);
         };

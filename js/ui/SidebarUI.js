@@ -23,14 +23,12 @@ export class SidebarUI {
             if (channel.img && channel.img !== 'img/app/error.png') {
                 const img = document.createElement('img');
                 img.src = channel.img;
-                img.alt = '';
-                img.style.width = '28px';
-                img.style.height = '28px';
-                img.style.objectFit = 'contain';
+                img.alt = channel.name;
+                img.className = 'channel-thumb';
 
                 // Manejar errores de carga de imagen
                 img.onerror = () => {
-                    img.style.display = 'none';
+                    img.classList.add('d-none');
                 };
 
                 btn.appendChild(img);
@@ -41,8 +39,7 @@ export class SidebarUI {
             btn.appendChild(span);
 
             if (idx === currentIndex) {
-                btn.style.backgroundColor = 'rgba(255,255,255,0.2)';
-                btn.style.fontWeight = 'bold';
+                btn.classList.add('channel-active');
             }
 
             btn.addEventListener('click', () => {

@@ -6,12 +6,15 @@ export class CastManager {
         this.isCastAvailable = false;
         this.currentChannel = null;
 
-        // El SDK de Cast carga de forma asíncrona, interceptamos el callback
+        // Reasignar el callback global ahora que CastManager existe
         window.__onGCastApiAvailable = (isAvailable) => {
-            if (isAvailable) {
-                this.#initializeCastApi();
-            }
+            if (isAvailable) this.#initializeCastApi();
         };
+
+        // Si el SDK ya había cargado antes de que CastManager se creara
+        if (window.__castApiReady) {
+            this.#initializeCastApi();
+        }
     }
 
     #initializeCastApi() {

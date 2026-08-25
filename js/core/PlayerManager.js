@@ -43,8 +43,6 @@ export class PlayerManager {
                 this.nativeAbortController = new AbortController();
                 const { signal } = this.nativeAbortController;
 
-                // Fundamental para que iOS no mande el video a pantalla completa automáticamente
-                this.video.playsInline = true;
                 this.video.src = channel.source;
 
                 // Timeout manual de 10 segundos (Evita el "Cuelgue Infinito" de Safari)
