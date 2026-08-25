@@ -117,6 +117,7 @@ class SPTVApp {
         this.sidebar.render(this.channels, startIndex);
         await this.changeChannel(startIndex);
         this.setupIdleTimer();
+        this.setupKeyboardNavigation();
 
         console.log('[SPTV]', 'SPTV listo');
     }
@@ -240,6 +241,65 @@ class SPTVApp {
         passiveEvents.forEach(evt => window.addEventListener(evt, resetIdleTimer, { passive: true }));
         // Disparar la primera vez para iniciar el ciclo
         resetIdleTimer();
+    }
+
+    setupKeyboardNavigation() {
+        // Mapear eventos de teclado standard y de Smart TV remotes
+        window.addEventListener('keydown', (e) => {
+            const sidebar = document.getElementById('sidebarChannels');
+            const isSidebarOpen = sidebar && sidebar.classList.contains('show');
+
+            // Si el sidebar está abierto, la navegación es manejada localmente por SidebarUI
+            if (isSidebarOpen) return;
+
+            switch (e.key) {
+                // Flecha Izquierda o Enter/OK abre la lista de canales
+                case 'ArrowLeft':
+                case 'Enter':
+                    e.preventDefault();
+                    if (this.sidebar) {
+                        this.sidebar.open();
+                    }
+                    break;
+
+                // Flecha Arriba o ChannelUp hace zapping al canal anterior directamente
+                case 'ArrowUp':
+                case 'PageUp':
+                case 'ChannelUp':
+                case 'UI_KEY_CHANNEL_UP':
+                    e.preventDefault();
+                    this.#zapChannel(-1);
+                    break;
+
+                // Flecha Abajo o ChannelDown hace zapping al canal siguiente directamente
+                case 'ArrowDown':
+                case 'PageDown':
+                case 'ChannelDown':
+                case 'UI_KEY_CHANNEL_DOWN':
+                    e.preventDefault();
+                    this.#zapChannel(1);
+                    break;
+
+                // Flecha Derecha muestra información flotante del canal actual
+                case 'ArrowRight':
+                    e.preventDefault();
+                    const channel = this.channels[this.currentIndex];
+                    if (channel) {
+                        notifications.showInfo(`Reproduciendo: ${channel.name}`);
+                    }
+                    break;
+            }
+        });
+    }
+
+    #zapChannel(direction) {
+        let newIndex = this.currentIndex + direction;
+        if (newIndex < 0) {
+            newIndex = this.channels.length - 1;
+        } else if (newIndex >= this.channels.length) {
+            newIndex = 0;
+        }
+        this.changeChannel(newIndex);
     }
 }
 
