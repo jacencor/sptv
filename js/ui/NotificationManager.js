@@ -7,26 +7,28 @@ class NotificationManager {
     /**
      * Muestra un toast
      * @param {string} message - Texto del mensaje
-     * @param {string} type - 'danger' | 'warning' | 'success' | 'info' (colores de Bootstrap)
+     * @param {string} type - 'danger' | 'warning' | 'success' | 'info' (colores de SPTV)
      * @param {number} duration - Duración en milisegundos
      */
     showToast(message, type = 'danger', duration = 4000) {
         if (!this.toastContainer) return;
 
         const toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center text-white text-bg-${type} border-0`;
+        toastEl.className = `toast align-items-center toast-${type} border-0`;
         toastEl.setAttribute('role', 'alert');
         toastEl.setAttribute('aria-live', this.#getAriaLive(type));
         toastEl.setAttribute('aria-atomic', 'true');
         toastEl.setAttribute('data-bs-autohide', 'true');
         toastEl.setAttribute('data-bs-delay', duration);
 
+        const closeBtnClass = this.#isDarkBg(type) ? 'btn-close-white' : '';
+
         toastEl.innerHTML = `
             <div class="d-flex">
                 <div class="toast-body">
                     <i class="fas ${this.#getIconByType(type)} me-2"></i> ${message}
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar notificación"></button>
+                <button type="button" class="btn-close ${closeBtnClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar notificación"></button>
             </div>
         `;
 
@@ -54,7 +56,7 @@ class NotificationManager {
         if (!this.toastContainer) return;
 
         const toastEl = document.createElement('div');
-        toastEl.className = 'toast toast-update align-items-center text-white text-bg-primary border-0';
+        toastEl.className = 'toast toast-update align-items-center border-0';
         toastEl.setAttribute('role', 'alertdialog');
         toastEl.setAttribute('aria-live', 'assertive');
         toastEl.setAttribute('aria-atomic', 'true');
@@ -115,6 +117,10 @@ class NotificationManager {
 
     showSuccess(message) {
         this.showToast(message, 'success');
+    }
+
+    #isDarkBg(type) {
+        return ['danger', 'success', 'update'].includes(type);
     }
 
     // SC 4.1.3: errores/warnings son urgentes (assertive), info/success son informativos (polite)

@@ -100,6 +100,42 @@ body {
     min-height: 44px;
 }
 
+/* Custom Accessible Toast Colors (WCAG 2.1 AA >= 4.5:1 contrast) */
+.toast-danger {
+    background-color: #b02a37 !important; /* Darker red for safe contrast with white text */
+    color: #ffffff !important;
+}
+.toast-success {
+    background-color: #146c43 !important; /* Darker green for safe contrast with white text */
+    color: #ffffff !important;
+}
+.toast-warning {
+    background-color: #ffc107 !important; /* Bright yellow */
+    color: #000000 !important; /* Dark text for high contrast (10+:1) */
+}
+.toast-info {
+    background-color: #0dcaf0 !important; /* Cyan */
+    color: #000000 !important; /* Dark text for high contrast (8+:1) */
+}
+.toast-update {
+    background-color: var(--bs-primary, #0d6efd) !important;
+    color: #ffffff !important;
+}
+
+/* Theme-specific overrides for toast colors in dark mode */
+[data-bs-theme="dark"] .toast-update {
+    background-color: #1d3557 !important; /* Safe dark blue for dark theme with white text */
+    color: #ffffff !important;
+}
+[data-bs-theme="dark"] .toast-warning {
+    background-color: #ffca2c !important;
+    color: #000000 !important;
+}
+[data-bs-theme="dark"] .toast-info {
+    background-color: #31d2f2 !important;
+    color: #000000 !important;
+}
+
 /* --- 7. Accessibility (WCAG 2.1 AA) --- */
 
 /* SC 2.4.7 — Foco visible: anillo de 3px para navegación por teclado */
