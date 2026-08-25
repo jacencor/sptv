@@ -1,11 +1,8 @@
-import { Logger } from './utils/Logger.js';
 import { NetworkMonitor } from './utils/NetworkMonitor.js';
-import { ChannelManager } from './core/ChannelManager.js';
+import { loadChannels } from './core/ChannelManager.js';
 import { PlayerManager } from './core/PlayerManager.js';
-import { OfflineStorage } from './core/OfflineStorage.js';
 import { SidebarUI } from './ui/SidebarUI.js';
-import { AppState } from './core/AppState.js';
-import { NotificationManager } from './ui/NotificationManager.js';
+import { notifications } from './ui/NotificationManager.js';
 import { CastManager } from './core/CastManager.js';
 
 // Al inicio de main.js, asegurar que el SW se actualice
@@ -29,11 +26,9 @@ if ('serviceWorker' in navigator) {
 
             // Función para mostrar el toast de actualización
             const showUpdatePrompt = (worker) => {
-                const notifications = NotificationManager.getInstance();
                 notifications.showUpdateToast(() => {
                     // Le decimos al SW que se active
                     worker.postMessage('SKIP_WAITING');
-                    worker.postMessage({ type: 'SKIP_WAITING' }); // Alternativa común
                 });
             };
 
@@ -66,9 +61,9 @@ if ('serviceWorker' in navigator) {
 
 class SPTVApp {
     constructor() {
-        this.state = AppState.getInstance();
+        this.channels = [];
+        this.currentIndex = 0;
         this.networkMonitor = new NetworkMonitor();
-        this.notifications = NotificationManager.getInstance();
         this.player = null;
         this.sidebar = null;
         this.castManager = null;
@@ -76,21 +71,20 @@ class SPTVApp {
     }
 
     async init() {
-        Logger.log('Iniciando SPTV...');
+        console.log('[SPTV]', 'Iniciando SPTV...');
 
         this.networkMonitor.start();
 
-        this.state.setChannels(await ChannelManager.loadFromUrl('/data/play.m3u'));
+        this.channels = await loadChannels('/data/play.m3u');
 
-        if (!this.state.channels.length) {
-            this.notifications.showError('No se pudieron cargar los canales');
-            Logger.error('No se cargaron canales');
+        if (!this.channels.length) {
+            notifications.showError('No se pudieron cargar los canales');
+            console.error('[SPTV]', 'No se cargaron canales');
             return;
         }
 
         const videoEl = document.getElementById('video');
-        this.player = new PlayerManager(videoEl, this.networkMonitor, this.notifications);
-        await this.player.init();
+        this.player = new PlayerManager(videoEl, this.networkMonitor, notifications);
 
         this.castManager = new CastManager((isConnected, channel) => {
             if (this.player) {
@@ -102,47 +96,61 @@ class SPTVApp {
             (idx) => this.changeChannel(idx)
         );
 
-        const lastChannel = await OfflineStorage.getLastChannel();
         let startIndex = 0;
+        try {
+            const data = localStorage.getItem('sptv_last');
+            if (data) {
+                const parsed = JSON.parse(data);
+                if (Date.now() - parsed.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                    const foundIndex = this.channels.findIndex(c => c.name === parsed.name);
+                    if (foundIndex !== -1) startIndex = foundIndex;
+                }
+            }
+        } catch (e) { /* ignore */ }
 
-        if (lastChannel) {
-            const foundIndex = this.state.channels.findIndex(c => c.name === lastChannel.name);
-            if (foundIndex !== -1) startIndex = foundIndex;
-        }
-
-        this.sidebar.render(this.state.channels, startIndex);
+        this.sidebar.render(this.channels, startIndex);
         await this.changeChannel(startIndex);
         this.setupIdleTimer();
 
-        Logger.log('SPTV listo');
+        console.log('[SPTV]', 'SPTV listo');
     }
 
     async changeChannel(index) {
         // Evitar cambios simultáneos
         if (this.isChangingChannel) {
-            this.notifications.showWarning('Ya estamos cambiando de canal, espera...');
-            Logger.warn('Ya cambiando canal, ignorando');
+            notifications.showWarning('Ya estamos cambiando de canal, espera...');
+            console.warn('[SPTV]', 'Ya cambiando canal, ignorando');
             return;
         }
 
-        if (index === this.state.currentIndex && this.player?.hls) {
-            this.notifications.showInfo('Ya estás viendo este canal');
-            Logger.log('Ya en este canal');
+        if (index === this.currentIndex && this.player?.hls) {
+            notifications.showInfo('Ya estás viendo este canal');
+            console.log('[SPTV]', 'Ya en este canal');
             return;
         }
 
         this.isChangingChannel = true;
-        this.state.currentIndex = index;
-        const channel = this.state.getCurrentChannel();
+        this.currentIndex = index;
+        const channel = this.channels[this.currentIndex];
 
-        Logger.log(`Cambiando a: ${channel.name}`);
+        console.log('[SPTV]', `Cambiando a: ${channel.name}`);
 
         // Guardar en almacenamiento
-        await OfflineStorage.saveLastChannel(channel, index);
+        try {
+            localStorage.setItem('sptv_last', JSON.stringify({
+                name: channel.name,
+                url: channel.source,
+                poster: channel.img,
+                index: index,
+                timestamp: Date.now()
+            }));
+        } catch (e) {
+            console.warn('[SPTV]', 'No se pudo guardar último canal');
+        }
 
         // Actualizar UI del sidebar
         if (this.sidebar) {
-            this.sidebar.render(this.state.channels, index);
+            this.sidebar.render(this.channels, index);
         }
 
         // Si estamos casteando, lo enviamos al Chromecast y marcamos éxito
@@ -151,7 +159,7 @@ class SPTVApp {
             if (castSession) {
                 this.castManager.castChannel(channel);
                 this.player.setCastMode(true, channel.name);
-                this.notifications.showSuccess(`▶️ (TV) ${channel.name}`, 2000);
+                notifications.showSuccess(`▶️ (TV) ${channel.name}`, 2000);
                 if (this.sidebar) {
                     this.sidebar.close();
                 }
@@ -164,22 +172,22 @@ class SPTVApp {
         this.player.retryCount = 0;
         const success = await this.player.loadChannel(channel);
 
-        Logger.log(`Exito: `+success);
+        console.log('[SPTV]', `Exito: `+success);
         if (success) {
-            this.notifications.showSuccess(`▶️ ${channel.name}`, 2000);
+            notifications.showSuccess(`▶️ ${channel.name}`, 2000);
             if (this.sidebar) {
                 this.sidebar.close();
             }
-        } else if (index + 1 < this.state.channels.length) {
-            this.notifications.showError(`❌ Falló ${channel.name}, cambiando al siguiente...`);
-            Logger.warn(`Falló ${channel.name}, intentando siguiente...`);
+        } else if (index + 1 < this.channels.length) {
+            notifications.showError(`❌ Falló ${channel.name}, cambiando al siguiente...`);
+            console.warn('[SPTV]', `Falló ${channel.name}, intentando siguiente...`);
             setTimeout(() => {
                 this.changeChannel(index + 1);
             }, 2000);
         } else {
-            this.notifications.showError('No hay más canales disponibles');
-            this.notifications.showError(`❌ Falló ${channel.name}, volviendo al inicio...`);
-            Logger.warn(`Falló ${channel.name}, volviendo al inicio...`);
+            notifications.showError('No hay más canales disponibles');
+            notifications.showError(`❌ Falló ${channel.name}, volviendo al inicio...`);
+            console.warn('[SPTV]', `Falló ${channel.name}, volviendo al inicio...`);
             index = 0;
             setTimeout(() => {
                 this.changeChannel(index);

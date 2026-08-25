@@ -1,5 +1,4 @@
-import { Logger } from '../utils/Logger.js';
-import { NotificationManager } from '../ui/NotificationManager.js';
+import { notifications } from '../ui/NotificationManager.js';
 
 export class CastManager {
     constructor(onStateChange) {
@@ -25,7 +24,7 @@ export class CastManager {
         });
 
         this.isCastAvailable = true;
-        Logger.log('Google Cast API inicializada');
+        console.log('[SPTV]', 'Google Cast API inicializada');
 
         // Escuchar cambios de estado (Conectando, Conectado, Desconectado)
         castContext.addEventListener(
@@ -45,7 +44,7 @@ export class CastManager {
                 }
 
                 if (event.sessionState === cast.framework.SessionState.SESSION_ENDED) {
-                     NotificationManager.getInstance().showInfo('Desconectado de Chromecast');
+                     notifications.showInfo('Desconectado de Chromecast');
                 }
             }
         );
@@ -63,7 +62,7 @@ export class CastManager {
             return false; 
         }
 
-        Logger.log(`Enviando canal a Chromecast: ${channel.name}`);
+        console.log('[SPTV]', `Enviando canal a Chromecast: ${channel.name}`);
 
         const mediaInfo = new chrome.cast.media.MediaInfo(channel.source, 'application/x-mpegurl');
         mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
@@ -77,12 +76,12 @@ export class CastManager {
         
         castSession.loadMedia(request).then(
             () => {
-                Logger.log('Carga en Chromecast exitosa');
-                NotificationManager.getInstance().showSuccess(`Enviado a TV: ${channel.name}`);
+                console.log('[SPTV]', 'Carga en Chromecast exitosa');
+                notifications.showSuccess(`Enviado a TV: ${channel.name}`);
             },
             (error) => {
-                Logger.error('Error enviando a Chromecast:', error);
-                NotificationManager.getInstance().showError('Fallo al transmitir a la TV');
+                console.error('[SPTV]', 'Error enviando a Chromecast:', error);
+                notifications.showError('Fallo al transmitir a la TV');
             }
         );
 

@@ -3,12 +3,6 @@ body {
     overflow: hidden;
 }
 
-.channel-icon {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-}
-
 .offcanvas {
     background-color: rgba(15, 15, 15, 0.95) !important;
     backdrop-filter: blur(10px);

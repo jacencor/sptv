@@ -1,18 +1,7 @@
-import { Logger } from '../utils/Logger.js';
-
-export class NotificationManager {
-    static #instance = null;
-
+class NotificationManager {
     constructor() {
-        if (NotificationManager.#instance) return NotificationManager.#instance;
         this.loadingOverlay = document.getElementById('loadingOverlay');
         this.toastContainer = document.getElementById('toastContainer');
-        NotificationManager.#instance = this;
-    }
-
-    static getInstance() {
-        if (!this.#instance) this.#instance = new NotificationManager();
-        return this.#instance;
     }
 
     /**
@@ -55,9 +44,9 @@ export class NotificationManager {
                 toastEl.remove();
             });
         } catch (error) {
-            Logger.error('Error al crear toast:', error);
+            console.error('[SPTV]', 'Error al crear toast:', error);
             // Fallback: mostrar en consola
-            Logger.info(`[${type.toUpperCase()}] ${message}`);
+            console.log('[SPTV]', `[${type.toUpperCase()}] ${message}`);
         }
     }
 
@@ -105,22 +94,22 @@ export class NotificationManager {
                 toastEl.remove();
             });
         } catch (error) {
-            Logger.error('Error al crear toast de update:', error);
+            console.error('[SPTV]', 'Error al crear toast de update:', error);
         }
     }
 
     showError(message) {
-        Logger.error(message);
+        console.error('[SPTV]', message);
         this.showToast(message, 'danger');
     }
 
     showInfo(message) {
-        Logger.log(message);
+        console.log('[SPTV]', message);
         this.showToast(message, 'info');
     }
 
     showWarning(message) {
-        Logger.warn(message);
+        console.warn('[SPTV]', message);
         this.showToast(message, 'warning');
     }
 
@@ -138,3 +127,5 @@ export class NotificationManager {
         return icons[type] || 'fa-bell';
     }
 }
+
+export const notifications = new NotificationManager();

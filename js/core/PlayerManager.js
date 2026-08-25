@@ -1,5 +1,3 @@
-import { Logger } from '../utils/Logger.js';
-
 export class PlayerManager {
     constructor(videoElement, networkMonitor, notifications) {
         this.video = videoElement;
@@ -17,21 +15,9 @@ export class PlayerManager {
         this.castChannelName = document.getElementById('castChannelName');
     }
 
-    async init() {
-        // Verificamos soporte nativo o de librería
-        const canPlayNative = this.video.canPlayType('application/vnd.apple.mpegurl');
-        const canPlayHlsJs = window.Hls && window.Hls.isSupported();
-
-        if (!canPlayNative && !canPlayHlsJs) {
-            Logger.error('HLS no es soportado en este navegador de ninguna forma.');
-            return false;
-        }
-        return true;
-    }
-
     async loadChannel(channel) {
         if (!channel || !channel.source) {
-            Logger.error('Intento de carga de canal inválido');
+            console.error('[SPTV]', 'Intento de carga de canal inválido');
             return false;
         }
 
@@ -47,7 +33,7 @@ export class PlayerManager {
 
             if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
 
-                Logger.log('Usando reproductor HLS nativo');
+                console.log('[SPTV]', 'Usando reproductor HLS nativo');
 
                 // Limpieza previa: Abortamos eventos de canales anteriores
                 if (this.nativeAbortController) {
@@ -63,7 +49,7 @@ export class PlayerManager {
 
                 // Timeout manual de 10 segundos (Evita el "Cuelgue Infinito" de Safari)
                 const nativeTimeout = setTimeout(() => {
-                    Logger.warn('Timeout nativo: Safari no pudo cargar el stream a tiempo.');
+                    console.warn('[SPTV]', 'Timeout nativo: Safari no pudo cargar el stream a tiempo.');
                     this.nativeAbortController.abort(); // Matamos todos los listeners
                     this.#handleNativeError({ code: 0, message: 'Timeout: Servidor no responde' });
                     this.destroyAndResolve(false);
@@ -74,7 +60,7 @@ export class PlayerManager {
                     clearTimeout(nativeTimeout); // Cancelamos la guillotina del timeout
 
                     this.video.play().catch(e => {
-                        Logger.warn('Autoplay nativo bloqueado. Requiere interacción:', e);
+                        console.warn('[SPTV]', 'Autoplay nativo bloqueado. Requiere interacción:', e);
                     });
                     resolve(true);
                 }, { signal });
@@ -87,15 +73,15 @@ export class PlayerManager {
                 }, { signal });
 
                 this.video.addEventListener('waiting', () => {
-                    Logger.warn('Conexión lenta, almacenando buffer...');
+                    console.warn('[SPTV]', 'Conexión lenta, almacenando buffer...');
                 }, { signal });
 
                 this.video.addEventListener('stalled', () => {
-                    Logger.warn('El stream nativo se ha estancado (stalled).');
+                    console.warn('[SPTV]', 'El stream nativo se ha estancado (stalled).');
                 }, { signal });
 
             } else if (window.Hls && window.Hls.isSupported()) {
-                Logger.log('Usando hls.js');
+                console.log('[SPTV]', 'Usando hls.js');
                 this.#initHlsJs(channel.source);
             }
         });
@@ -111,7 +97,6 @@ export class PlayerManager {
                 startLevel: bufferConfig.startLevel, // ABR automático activado
                 capLevelToPlayerSize: true, // Optimización de ancho de banda basado en viewport
                 abrEwmaDefaultEstimate: 5e5,
-                // lowLatencyMode: false, // Desactiva a menos que el backend use LL-HLS real
                 liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
                 liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
                 maxMaxBufferLength: 30,
@@ -133,12 +118,12 @@ export class PlayerManager {
             this.hls.attachMedia(this.video);
 
             this.hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
-                Logger.log('HLS Media attached');
+                console.log('[SPTV]', 'HLS Media attached');
             });
 
             this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
                 this.video.play().catch(e => {
-                    Logger.warn('Auto-play bloqueado por el navegador. Requiere interacción.');
+                    console.warn('[SPTV]', 'Auto-play bloqueado por el navegador. Requiere interacción.');
                 });
                 if (this.loadPromiseResolve) {
                     this.loadPromiseResolve(true);
@@ -156,11 +141,11 @@ export class PlayerManager {
 
     #handleHlsError(data, source) {
         if (data.fatal) {
-            Logger.error(`Error fatal HLS: ${data.type} - ${data.details}`);
+            console.error('[SPTV]', `Error fatal HLS: ${data.type} - ${data.details}`);
             this.retryCount++;
 
             if (this.retryCount > this.maxRetries) {
-                Logger.error(`Límite de errores fatales (${this.maxRetries}) superado. Canal muerto.`);
+                console.error('[SPTV]', `Límite de errores fatales (${this.maxRetries}) superado. Canal muerto.`);
                 this.notifications?.showError('Fallo definitivo: Imposible conectar con la señal de origen.');
                 this.destroyAndResolve(false);
                 return;
@@ -183,13 +168,13 @@ export class PlayerManager {
                     break;
             }
         } else {
-            Logger.warn(`Error no faltal HLS: ${data.type} - ${data.details}`);
+            console.warn('[SPTV]', `Error no fatal HLS: ${data.type} - ${data.details}`);
             // Si entra un aviso no fatal (y no son timeouts), asumimos que el stream se estabilizó
             if (data.details !== 'fragLoadTimeOut' && data.details !== 'levelLoadTimeOut') {
                 this.retryCount = 0;
             }
 
-            // ... (Aquí va la lógica de "Nudge" para desatascar streams lentos que ya tenías)
+            // Lógica de "Nudge" para desatascar streams lentos
             if (data.details === 'fragLoadTimeOut' || data.details === 'levelLoadTimeOut') {
                 this.retryCount++;
                 if (this.retryCount >= this.maxRetries) {
@@ -232,7 +217,7 @@ export class PlayerManager {
             }
         }
 
-        Logger.error(`[Nativo] ${errorMessage}`);
+        console.error('[SPTV]', `[Nativo] ${errorMessage}`);
         this.notifications?.showError(`Señal perdida: ${errorMessage}`);
     }
 

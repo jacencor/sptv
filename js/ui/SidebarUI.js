@@ -1,5 +1,3 @@
-import { Logger } from '../utils/Logger.js';
-
 export class SidebarUI {
     constructor(onChannelSelect) {
         this.container = document.getElementById('channels-group');
@@ -9,7 +7,7 @@ export class SidebarUI {
         if (offcanvasElement) {
             this.offcanvasInstance = new bootstrap.Offcanvas(offcanvasElement);
         } else {
-            Logger.warn('Offcanvas element or Bootstrap not found');
+            console.warn('[SPTV]', 'Offcanvas element or Bootstrap not found');
         }
     }
 
@@ -55,14 +53,14 @@ export class SidebarUI {
             this.container.appendChild(btn);
         });
 
-        Logger.log(`Sidebar: ${channels.length} canales`);
+        console.log('[SPTV]', `Sidebar: ${channels.length} canales`);
     }
 
     open() {
         if (this.offcanvasInstance) {
             this.offcanvasInstance.show();
         } else {
-            Logger.warn('Offcanvas instancia no disponible');
+            console.warn('[SPTV]', 'Offcanvas instancia no disponible');
         }
     }
 

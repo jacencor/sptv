@@ -1,31 +1,15 @@
-import { Logger } from './Logger.js';
-
 export class NetworkMonitor {
     constructor() {
         this.connection = navigator.connection || navigator.mozConnection || null;
-        this.listeners = [];
     }
 
     start() {
         if (!this.connection) {
-            Logger.log('Network API no soportada, usando valores por defecto');
+            console.log('[SPTV]', 'Network API no soportada, usando valores por defecto');
             return;
         }
 
-        Logger.log(`Red: ${this.connection.effectiveType || 'desconocido'}, ${this.connection.downlink || '?'}Mbps`);
-        this.connection.addEventListener('change', () => this.#notifyChange());
-    }
-
-    #notifyChange() {
-        if (!this.connection) return;
-        Logger.log(`Red cambiada: ${this.connection.effectiveType}, ${this.connection.downlink}Mbps`);
-        this.listeners.forEach(fn => fn(this.connection));
-    }
-
-    onchange(callback) {
-        if (typeof callback === 'function') {
-            this.listeners.push(callback);
-        }
+        console.log('[SPTV]', `Red: ${this.connection.effectiveType || 'desconocido'}, ${this.connection.downlink || '?'}Mbps`);
     }
 
     getBufferConfig() {
