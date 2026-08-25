@@ -16,7 +16,7 @@ class NotificationManager {
         const toastEl = document.createElement('div');
         toastEl.className = `toast align-items-center text-white text-bg-${type} border-0`;
         toastEl.setAttribute('role', 'alert');
-        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-live', this.#getAriaLive(type));
         toastEl.setAttribute('aria-atomic', 'true');
         toastEl.setAttribute('data-bs-autohide', 'true');
         toastEl.setAttribute('data-bs-delay', duration);
@@ -26,7 +26,7 @@ class NotificationManager {
                 <div class="toast-body">
                     <i class="fas ${this.#getIconByType(type)} me-2"></i> ${message}
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar notificación"></button>
             </div>
         `;
 
@@ -54,11 +54,11 @@ class NotificationManager {
         if (!this.toastContainer) return;
 
         const toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center text-white text-bg-primary border-0`;
-        toastEl.setAttribute('role', 'alert');
+        toastEl.className = 'toast toast-update align-items-center text-white text-bg-primary border-0';
+        toastEl.setAttribute('role', 'alertdialog');
         toastEl.setAttribute('aria-live', 'assertive');
         toastEl.setAttribute('aria-atomic', 'true');
-        toastEl.setAttribute('data-bs-autohide', 'false'); // No ocultar auto
+        toastEl.setAttribute('data-bs-autohide', 'false');
 
         toastEl.innerHTML = `
             <div class="toast-body d-flex flex-column">
@@ -68,8 +68,8 @@ class NotificationManager {
                 </div>
                 <div>Una nueva versión de SPTV está lista para instalarse.</div>
                 <div class="mt-2 pt-2 border-top">
-                    <button type="button" class="btn btn-light btn-sm w-100 fw-bold" id="btnUpdatePwa">Actualizar Ahora</button>
-                    <button type="button" class="btn btn-link btn-sm text-white w-100 text-decoration-none mt-1" data-bs-dismiss="toast">Quizás más tarde</button>
+                    <button type="button" class="btn btn-light w-100 fw-bold" id="btnUpdatePwa">Actualizar Ahora</button>
+                    <button type="button" class="btn btn-link text-white w-100 text-decoration-none mt-1" data-bs-dismiss="toast" aria-label="Posponer actualización">Quizás más tarde</button>
                 </div>
             </div>
         `;
@@ -115,6 +115,11 @@ class NotificationManager {
 
     showSuccess(message) {
         this.showToast(message, 'success');
+    }
+
+    // SC 4.1.3: errores/warnings son urgentes (assertive), info/success son informativos (polite)
+    #getAriaLive(type) {
+        return (type === 'danger' || type === 'warning') ? 'assertive' : 'polite';
     }
 
     #getIconByType(type) {

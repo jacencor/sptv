@@ -81,9 +81,23 @@ body {
     font-size: 5rem;
 }
 
-/* --- 6. Toast Refinement (Soft UI shadows) --- */
+/* --- 6. Toast Refinement (Soft UI + Accessibility) --- */
 .toast {
     box-shadow: var(--sptv-shadow-soft);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: var(--bs-border-radius-lg);
+}
+
+/* Close button — min click target SC 2.5.8 */
+.toast .btn-close {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+/* Update toast buttons — min click target SC 2.5.8 */
+.toast-update .btn {
+    min-height: 44px;
 }
 
 /* --- 7. Accessibility (WCAG 2.1 AA) --- */
