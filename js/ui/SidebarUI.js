@@ -25,6 +25,7 @@ export class SidebarUI {
                 img.src = channel.img;
                 img.alt = channel.name;
                 img.className = 'channel-thumb';
+                img.referrerPolicy = 'no-referrer';
 
                 // Manejar errores de carga de imagen
                 img.onerror = () => {
