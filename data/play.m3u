@@ -9,6 +9,8 @@ https://d2qsan2ut81n2k.cloudfront.net/live/72a3661e-1019-45f8-af10-af59f6ef6222/
 https://teleamazonas-live.cdn.vustreams.com/live/fd4ab346-b4e3-4628-abf0-b5a1bc192428/live.isml/fd4ab346-b4e3-4628-abf0-b5a1bc192428.m3u8
 #EXTINF:-1 tvg-id="13.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuadortv.png" group-title="Todos",13 EC TV
 https://samson.streamerr.co:8081/shogun/index.m3u8
+#EXTINF:-1 tvg-id="gama.ec" tvg-logo="https://sptv.netlify.app/img/ch/ecuadortv.png" group-title="Todos",Gamavision
+https://stream.esradioecuador.com/hls/stream.m3u8?t=1782225955736
 #EXTINF:-1 tvg-id="RCNMas.co@SD" tvg-logo="https://i.imgur.com/MJzuRAN.png" group-title="Entertainment",RCN Más (1080p)
 https://rcntv-rcnmas-1-us.plex.wurl.tv/playlist.m3u8
 #EXTINF:-1 group-title="Colombia" tvg-logo="https://i.imgur.com/5PhTaHp.png",RCN HD
