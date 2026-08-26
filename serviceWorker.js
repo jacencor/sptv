@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sptv-v1.12';
+const CACHE_NAME = 'sptv-v1.13';
 const STATIC_ASSETS = [
     '/',
     '/index.html',

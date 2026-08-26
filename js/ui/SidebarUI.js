@@ -5,7 +5,7 @@ export class SidebarUI {
         
         const offcanvasElement = document.getElementById('sidebarChannels');
         this.offcanvasInstance = offcanvasElement ? new bootstrap.Offcanvas(offcanvasElement) : null;
-        offcanvasElement?.addEventListener('shown.bs.offcanvas', () => this.focusActiveChannel());
+        if (offcanvasElement) offcanvasElement.addEventListener('shown.bs.offcanvas', () => this.focusActiveChannel());
 
         if (this.container) {
             // Event delegation para clicks
@@ -25,12 +25,12 @@ export class SidebarUI {
 
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    activeEl.nextElementSibling?.focus();
-                    activeEl.nextElementSibling?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    var next = activeEl.nextElementSibling;
+                    if (next) { next.focus(); next.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    activeEl.previousElementSibling?.focus();
-                    activeEl.previousElementSibling?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                    var prev = activeEl.previousElementSibling;
+                    if (prev) { prev.focus(); prev.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
                 } else if (['ArrowRight', 'Backspace'].includes(e.key) || e.keyCode === 461 || e.keyCode === 10009) {
                     e.preventDefault();
                     this.close();
@@ -57,13 +57,13 @@ export class SidebarUI {
     }
 
     focusActiveChannel() {
-        const activeBtn = this.container?.querySelector('.channel-active') || this.container?.querySelector('button');
+        var activeBtn = (this.container ? this.container.querySelector('.channel-active') : null) || (this.container ? this.container.querySelector('button') : null);
         if (activeBtn) {
             activeBtn.focus();
             activeBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
     }
 
-    open() { this.offcanvasInstance?.show(); }
-    close() { this.offcanvasInstance?.hide(); }
+    open() { if (this.offcanvasInstance) this.offcanvasInstance.show(); }
+    close() { if (this.offcanvasInstance) this.offcanvasInstance.hide(); }
 }

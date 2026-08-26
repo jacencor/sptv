@@ -1,3 +1,11 @@
+// Mapa de errores nativos HTMLMediaError (Safari/iOS)
+const NATIVE_ERRORS = {
+    1: 'La carga del canal fue cancelada.',
+    2: 'Se perdió la conexión con el servidor de origen.',
+    3: 'El stream está corrupto o desincronizado.',
+    4: 'El formato del canal no es compatible.'
+};
+
 export class PlayerManager {
     constructor(videoElement, notifications) {
         this.video = videoElement;
@@ -34,7 +42,7 @@ export class PlayerManager {
 
             if (window.Hls && window.Hls.isSupported()) {
                 console.log('[SPTV]', 'Usando hls.js');
-                this.#initHlsJs(channel.source);
+                this._initHlsJs(channel.source);
             } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
 
                 console.log('[SPTV]', 'Usando reproductor HLS nativo');
@@ -53,7 +61,7 @@ export class PlayerManager {
                 const nativeTimeout = setTimeout(() => {
                     console.warn('[SPTV]', 'Timeout nativo: Safari no pudo cargar el stream a tiempo.');
                     this.nativeAbortController.abort(); // Matamos todos los listeners
-                    this.#handleNativeError({ code: 0, message: 'Timeout: Servidor no responde' });
+                    this._handleNativeError({ code: 0, message: 'Timeout: Servidor no responde' });
                     this.destroyAndResolve(false);
                 }, 10000);
 
@@ -70,7 +78,7 @@ export class PlayerManager {
                 this.video.addEventListener('error', () => {
                     clearTimeout(nativeTimeout);
                     const err = this.video.error;
-                    this.#handleNativeError(err);
+                    this._handleNativeError(err);
                     this.destroyAndResolve(false);
                 }, { signal });
 
@@ -86,7 +94,7 @@ export class PlayerManager {
         });
     }
 
-    #initHlsJs(source) {
+    _initHlsJs(source) {
         if (!this.hls) {
             this.hls = new window.Hls({
                 enableWorker: true,
@@ -133,7 +141,7 @@ export class PlayerManager {
                 }
             });
 
-            this.hls.on(window.Hls.Events.ERROR, (event, data) => this.#handleHlsError(data, this.currentChannel?.source));
+            this.hls.on(window.Hls.Events.ERROR, (event, data) => this._handleHlsError(data, this.currentChannel ? this.currentChannel.source : null));
         } else {
             this.hls.stopLoad(); // Frenar descargas del canal viejo si se reutiliza
         }
@@ -141,42 +149,40 @@ export class PlayerManager {
         this.hls.loadSource(source);
     }
 
-    #handleHlsError(data, source) {
+    _handleHlsError(data, source) {
         if (data.fatal) {
             console.error('[SPTV]', `Error fatal HLS: ${data.type} - ${data.details}`);
             this.retryCount++;
 
             if (this.retryCount > this.maxRetries) {
                 console.error('[SPTV]', `Límite de errores fatales (${this.maxRetries}) superado. Canal muerto.`);
-                this.notifications?.showError('Fallo definitivo: Imposible conectar con la señal de origen.');
+                if (this.notifications) this.notifications.showError('Fallo definitivo: Imposible conectar con la señal de origen.');
                 this.destroyAndResolve(false);
                 return;
             }
 
             switch (data.type) {
                 case window.Hls.ErrorTypes.NETWORK_ERROR:
-                    this.notifications?.showWarning(`Red inestable (Intento ${this.retryCount}/${this.maxRetries}). Reconectando...`);
+                    if (this.notifications) this.notifications.showWarning(`Red inestable (Intento ${this.retryCount}/${this.maxRetries}). Reconectando...`);
                     this.retryTimeout = setTimeout(() => {
                         if (this.hls) { this.hls.loadSource(source); this.hls.startLoad(); }
                     }, 2000);
                     break;
                 case window.Hls.ErrorTypes.MEDIA_ERROR:
-                    this.notifications?.showWarning(`Fallo de video (Intento ${this.retryCount}/${this.maxRetries}). Limpiando buffer...`);
+                    if (this.notifications) this.notifications.showWarning(`Fallo de video (Intento ${this.retryCount}/${this.maxRetries}). Limpiando buffer...`);
                     this.hls.recoverMediaError();
                     break;
                 default:
-                    this.notifications?.showError('Error crítico reproduciendo el canal.');
+                    if (this.notifications) this.notifications.showError('Error crítico reproduciendo el canal.');
                     this.destroyAndResolve(false);
                     break;
             }
         } else {
             console.warn('[SPTV]', `Error no fatal HLS: ${data.type} - ${data.details}`);
-            // Si entra un aviso no fatal (y no son timeouts), asumimos que el stream se estabilizó
             if (data.details !== 'fragLoadTimeOut' && data.details !== 'levelLoadTimeOut') {
                 this.retryCount = 0;
             }
 
-            // Lógica de "Nudge" para desatascar streams lentos
             if (data.details === 'fragLoadTimeOut' || data.details === 'levelLoadTimeOut') {
                 this.retryCount++;
                 if (this.retryCount >= this.maxRetries) {
@@ -184,7 +190,7 @@ export class PlayerManager {
                     this.retryTimeout = setTimeout(() => {
                         this.hls.startLoad();
                         if (this.video && (this.video.paused || this.video.readyState < 3)) {
-                            this.video.currentTime += 0.1; // Nudge
+                            this.video.currentTime += 0.1;
                         }
                     }, 500);
                     this.retryCount = 0;
@@ -193,34 +199,13 @@ export class PlayerManager {
         }
     }
 
-    #handleNativeError(error) {
-        let errorMessage = 'Error crítico al reproducir la señal.';
-
-        if (error) {
-            if (error.code === 0 && error.message) {
-                errorMessage = error.message;
-            }
-            // Manejo de códigos nativos HTMLMediaError (Safari/iOS)
-            else {
-                switch (error.code) {
-                    case 1: // MEDIA_ERR_ABORTED
-                        errorMessage = 'La carga del canal fue cancelada.';
-                        break;
-                    case 2: // MEDIA_ERR_NETWORK
-                        errorMessage = 'Se perdió la conexión con el servidor de origen.';
-                        break;
-                    case 3: // MEDIA_ERR_DECODE
-                        errorMessage = 'El stream está corrupto o desincronizado.';
-                        break;
-                    case 4: // MEDIA_ERR_SRC_NOT_SUPPORTED
-                        errorMessage = 'El formato del canal no es compatible.';
-                        break;
-                }
-            }
-        }
-
-        console.error('[SPTV]', `[Nativo] ${errorMessage}`);
-        this.notifications?.showError(`Señal perdida: ${errorMessage}`);
+    _handleNativeError(error) {
+        var code = error ? error.code : null;
+        var msg = (code === 0 && error.message)
+            ? error.message
+            : NATIVE_ERRORS[code] || 'Error crítico al reproducir la señal.';
+        console.error('[SPTV]', `[Nativo] ${msg}`);
+        if (this.notifications) this.notifications.showError(`Señal perdida: ${msg}`);
     }
 
     setCastMode(isCasting, channelName = '') {
@@ -273,14 +258,4 @@ export class PlayerManager {
         }
     }
 
-    destroy() {
-        if (this.hls) {
-            this.hls.destroy();
-            this.hls = null;
-        }
-        if (this.video) {
-            this.video.removeAttribute('src');
-            this.video.load();
-        }
-    }
 }

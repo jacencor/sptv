@@ -4,7 +4,6 @@ IPTV Filter - Para archivo spa.txt
 Filtra por tvg-id, omite EXTVLCOPT, Geo-blocked y URLs con IP
 """
 import urllib.request
-import ssl
 import re
 import os
 
@@ -116,22 +115,7 @@ MEJORES_TVG_IDS = [
     "TVEInternacionalAmerica.es",
 ]
 
-# ============================================================
-# PATRONES PARA EXCLUIR
-# ============================================================
 
-EXCLUDE_PATTERNS = [
-    r"#EXTVLCOPT",           # Líneas con EXTVLCOPT
-    r"Geo-blocked",          # Canales con geo-bloqueo
-    r"\[Geo-blocked\]",      # Misma condición
-    r"Not 24/7",             # Opcional: elimina si quieres
-]
-
-# Patrón para detectar URL con IP (ej: http://45.184.109.10/...)
-IP_URL_PATTERN = r"https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
-# ============================================================
-# PATRONES PARA EXCLUIR
-# ============================================================
 
 def limpiar_tvg_id(tvg_id_raw):
     """
@@ -145,6 +129,10 @@ def limpiar_tvg_id(tvg_id_raw):
     if "@" in tvg_id_raw:
         return tvg_id_raw.split("@")[0]
     return tvg_id_raw
+
+# Patrón para detectar URL con IP (ej: http://45.184.109.10/...)
+IP_URL_PATTERN = r"https?://\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}"
+
 # ============================================================
 # FUNCIÓN PRINCIPAL
 # ============================================================
@@ -155,11 +143,7 @@ def filtrar_lista(archivo_salida="mejores_canales.m3u"):
     print("=" * 70)
     print("FILTRANDO LISTA IPTV - MEJORES CANALES LATINOAMÉRICA + EUROPA")
     print("=" * 70)
-    
-    # Configurar SSL
-    ctx = ssl.create_default_context()
-    ctx.check_hostname = False
-    ctx.verify_mode = ssl.CERT_NONE
+
 
     # Descargar lista
     print("\n📥 Descargando lista IPTV...")
@@ -167,7 +151,7 @@ def filtrar_lista(archivo_salida="mejores_canales.m3u"):
 
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, context=ctx, timeout=30) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             content = response.read().decode("utf-8")
     except Exception as e:
         print(f"❌ Error al descargar: {e}")
@@ -179,10 +163,6 @@ def filtrar_lista(archivo_salida="mejores_canales.m3u"):
     print("\n🔍 Parseando y filtrando canales...")
 
     lines = content.split("\n")
-    
-    #with open(content, "r", encoding="utf-8") as f:
-    #   lines = f.readlines()
-    
     print(f"📥 Archivo cargado: {len(lines)} líneas")
     
     # Diccionario para almacenar canales encontrados
@@ -296,31 +276,17 @@ def filtrar_lista(archivo_salida="mejores_canales.m3u"):
         "🌐 Internacionales": [],
     }
     
+    PAIS_MAP = {
+        ".ar": "🇦🇷 Argentina", ".cl": "🇨🇱 Chile", ".co": "🇨🇴 Colombia",
+        ".mx": "🇲🇽 México", ".pe": "🇵🇪 Perú", ".ec": "🇪🇨 Ecuador",
+        ".bo": "🇧🇴 Bolivia", ".py": "🇵🇾 Paraguay", ".do": "🇩🇴 República Dominicana",
+        ".ve": "🇻🇪 Venezuela", ".es": "🇪🇸 España"
+    }
+    
     for tvg_id, info in canales_encontrados.items():
-        if tvg_id.endswith(".ar"):
-            categorias["🇦🇷 Argentina"].append(info)
-        elif tvg_id.endswith(".cl"):
-            categorias["🇨🇱 Chile"].append(info)
-        elif tvg_id.endswith(".co"):
-            categorias["🇨🇴 Colombia"].append(info)
-        elif tvg_id.endswith(".mx"):
-            categorias["🇲🇽 México"].append(info)
-        elif tvg_id.endswith(".pe"):
-            categorias["🇵🇪 Perú"].append(info)
-        elif tvg_id.endswith(".ec"):
-            categorias["🇪🇨 Ecuador"].append(info)
-        elif tvg_id.endswith(".bo"):
-            categorias["🇧🇴 Bolivia"].append(info)
-        elif tvg_id.endswith(".py"):
-            categorias["🇵🇾 Paraguay"].append(info)
-        elif tvg_id.endswith(".do"):
-            categorias["🇩🇴 República Dominicana"].append(info)
-        elif tvg_id.endswith(".ve"):
-            categorias["🇻🇪 Venezuela"].append(info)
-        elif tvg_id.endswith(".es"):
-            categorias["🇪🇸 España"].append(info)
-        else:
-            categorias["🌐 Internacionales"].append(info)
+        sufijo = "." + tvg_id.rsplit(".", 1)[-1] if "." in tvg_id else ""
+        categoria = PAIS_MAP.get(sufijo, "🌐 Internacionales")
+        categorias.setdefault(categoria, []).append(info)
     
     total_canales = 0
     for categoria, canales in categorias.items():
@@ -364,8 +330,4 @@ def filtrar_lista(archivo_salida="mejores_canales.m3u"):
 # ============================================================
 
 if __name__ == "__main__":
-    # Usar el archivo que compartiste
-    
-    # Si el archivo está en otra ruta, cámbiala
-    
     filtrar_lista("mejores_canales.m3u")

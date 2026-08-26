@@ -71,7 +71,7 @@ class SPTVApp {
         this.player = null;
         this.sidebar = null;
         this.castManager = null;
-        this.isChangingChannel = false; // Evitar cambios múltiples
+
     }
 
     async init() {
@@ -119,7 +119,6 @@ class SPTVApp {
     }
 
     async changeChannel(index) {
-        this.isChangingChannel = true;
         this.currentIndex = index;
         const channel = this.channels[this.currentIndex];
 
@@ -136,9 +135,7 @@ class SPTVApp {
         }
 
         // Actualizar UI del sidebar
-        if (this.sidebar) {
-            this.sidebar.render(this.channels, index);
-        }
+        if (this.sidebar) this.sidebar.render(this.channels, index);
 
         // Si estamos casteando, lo enviamos al Chromecast y marcamos éxito
         if (this.castManager && this.castManager.isCastAvailable) {
@@ -147,10 +144,7 @@ class SPTVApp {
                 this.castManager.castChannel(channel);
                 this.player.setCastMode(true, channel.name);
                 notifications.showSuccess(`▶️ (TV) ${channel.name}`, 2000);
-                if (this.sidebar) {
-                    this.sidebar.close();
-                }
-                this.isChangingChannel = false;
+                if (this.sidebar) this.sidebar.close();
                 return;
             }
         }
@@ -168,7 +162,7 @@ class SPTVApp {
 
         if (success) {
             notifications.showSuccess(`▶️ ${channel.name}`, 2000);
-            this.sidebar?.close();
+            if (this.sidebar) this.sidebar.close();
         } else if (index + 1 < this.channels.length) {
             notifications.showError(`❌ Falló ${channel.name}, cambiando al siguiente...`);
             console.warn('[SPTV]', `Falló ${channel.name}, intentando siguiente...`);
@@ -184,7 +178,6 @@ class SPTVApp {
             }, 2000);
         }
 
-        this.isChangingChannel = false;
     }
 
     setupIdleTimer() {
@@ -224,9 +217,7 @@ class SPTVApp {
                 case 'ArrowLeft':
                 case 'Enter':
                     e.preventDefault();
-                    if (this.sidebar) {
-                        this.sidebar.open();
-                    }
+                    if (this.sidebar) this.sidebar.open();
                     break;
 
                 // Flecha Arriba o ChannelUp hace zapping al canal anterior directamente
@@ -235,7 +226,7 @@ class SPTVApp {
                 case 'ChannelUp':
                 case 'UI_KEY_CHANNEL_UP':
                     e.preventDefault();
-                    this.#zapChannel(-1);
+                    this._zapChannel(-1);
                     break;
 
                 // Flecha Abajo o ChannelDown hace zapping al canal siguiente directamente
@@ -244,7 +235,7 @@ class SPTVApp {
                 case 'ChannelDown':
                 case 'UI_KEY_CHANNEL_DOWN':
                     e.preventDefault();
-                    this.#zapChannel(1);
+                    this._zapChannel(1);
                     break;
 
                 // Flecha Derecha muestra información flotante del canal actual
@@ -259,7 +250,7 @@ class SPTVApp {
         });
     }
 
-    #zapChannel(direction) {
+    _zapChannel(direction) {
         let newIndex = this.currentIndex + direction;
         if (newIndex < 0) {
             newIndex = this.channels.length - 1;

@@ -8,16 +8,16 @@ export class CastManager {
 
         // Reasignar el callback global ahora que CastManager existe
         window.__onGCastApiAvailable = (isAvailable) => {
-            if (isAvailable) this.#initializeCastApi();
+            if (isAvailable) this._initializeCastApi();
         };
 
         // Si el SDK ya había cargado antes de que CastManager se creara
         if (window.__castApiReady) {
-            this.#initializeCastApi();
+            this._initializeCastApi();
         }
     }
 
-    #initializeCastApi() {
+    _initializeCastApi() {
         const castContext = cast.framework.CastContext.getInstance();
         
         castContext.setOptions({
