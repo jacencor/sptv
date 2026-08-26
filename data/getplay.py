@@ -26,6 +26,7 @@ MEJORES_TVG_IDS = [
     "TVN.cl",
     "LaRed.cl",
     "Mega.cl",
+    "EnerGeek.cl",
     
     # COLOMBIA
     "RCNMas.co",
@@ -38,6 +39,7 @@ MEJORES_TVG_IDS = [
     "Canal22Nacional.mx",
     "MultimediosMonterrey.mx",
     "AztecaInternacional.mx",
+    "TUDN.mx",
     
     # PERÚ
     "Latina.pe",
