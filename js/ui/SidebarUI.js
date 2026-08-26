@@ -2,13 +2,12 @@ export class SidebarUI {
     constructor(onChannelSelect) {
         this.container = document.getElementById('channels-group');
         this.onChannelSelect = onChannelSelect;
-        
+
         const offcanvasElement = document.getElementById('sidebarChannels');
         this.offcanvasInstance = offcanvasElement ? new bootstrap.Offcanvas(offcanvasElement) : null;
         if (offcanvasElement) offcanvasElement.addEventListener('shown.bs.offcanvas', () => this.focusActiveChannel());
 
         if (this.container) {
-            // Event delegation para clicks
             this.container.addEventListener('click', (e) => {
                 const btn = e.target.closest('button.list-group-item');
                 if (!btn) return;
@@ -41,12 +40,12 @@ export class SidebarUI {
 
     render(channels, currentIndex) {
         if (!this.container) return;
-        
+
         this.container.innerHTML = channels.map((channel, idx) => {
             const imgSrc = (channel.img && channel.img !== 'img/app/error.png') ? channel.img : '';
             const imgHTML = imgSrc ? `<img src="${imgSrc}" alt="${channel.name}" class="channel-thumb" referrerpolicy="no-referrer" onerror="this.classList.add('d-none')">` : '';
             const activeClass = (idx === currentIndex) ? 'channel-active' : '';
-            
+
             return `<button class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0 ${activeClass}" tabindex="0" data-index="${idx}">
                 ${imgHTML}
                 <span>${channel.name}</span>

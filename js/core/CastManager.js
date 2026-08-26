@@ -6,12 +6,10 @@ export class CastManager {
         this.isCastAvailable = false;
         this.currentChannel = null;
 
-        // Reasignar el callback global ahora que CastManager existe
         window.__onGCastApiAvailable = (isAvailable) => {
             if (isAvailable) this._initializeCastApi();
         };
 
-        // Si el SDK ya había cargado antes de que CastManager se creara
         if (window.__castApiReady) {
             this._initializeCastApi();
         }
@@ -19,7 +17,7 @@ export class CastManager {
 
     _initializeCastApi() {
         const castContext = cast.framework.CastContext.getInstance();
-        
+
         castContext.setOptions({
             // Usar el ID genérico para streams de video (soporta HLS/M3U8)
             receiverApplicationId: chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
@@ -29,31 +27,27 @@ export class CastManager {
         this.isCastAvailable = true;
         console.log('[SPTV]', 'Google Cast API inicializada');
 
-        // Escuchar cambios de estado (Conectando, Conectado, Desconectado)
         castContext.addEventListener(
             cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
             (event) => {
                 const isConnected = event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
-                                    event.sessionState === cast.framework.SessionState.SESSION_RESUMED;
-                
+                    event.sessionState === cast.framework.SessionState.SESSION_RESUMED;
+
                 if (isConnected && this.currentChannel) {
-                    // Si nos acabamos de conectar y hay un canal local sonando, lo enviamos a la TV
                     this.castChannel(this.currentChannel);
                 }
-                
-                // Avisamos a main.js/PlayerManager del cambio
+
                 if (this.onStateChange) {
                     this.onStateChange(isConnected, this.currentChannel);
                 }
 
                 if (event.sessionState === cast.framework.SessionState.SESSION_ENDED) {
-                     notifications.showInfo('Desconectado de Chromecast');
+                    notifications.showInfo('Desconectado de Chromecast');
                 }
             }
         );
     }
 
-    // Método para ser llamado desde main.js cuando se cambia de canal
     castChannel(channel) {
         this.currentChannel = channel;
 
@@ -61,8 +55,7 @@ export class CastManager {
 
         const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
         if (!castSession) {
-            // No estamos conectados a la TV, devuelve false para que se reproduzca localmente
-            return false; 
+            return false;
         }
 
         console.log('[SPTV]', `Enviando canal a Chromecast: ${channel.name}`);
@@ -76,7 +69,7 @@ export class CastManager {
         }
 
         const request = new chrome.cast.media.LoadRequest(mediaInfo);
-        
+
         castSession.loadMedia(request).then(
             () => {
                 console.log('[SPTV]', 'Carga en Chromecast exitosa');
@@ -88,6 +81,6 @@ export class CastManager {
             }
         );
 
-        return true; // Se está enviando a la TV
+        return true;
     }
 }

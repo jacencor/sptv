@@ -4,23 +4,19 @@ import { SidebarUI } from './ui/SidebarUI.js';
 import { notifications } from './ui/NotificationManager.js';
 import { CastManager } from './core/CastManager.js';
 
-// Interceptar callback del Cast SDK antes de que el SDK termine de cargar.
-// Debe estar en el scope global del módulo para ganar la carrera contra el SDK.
+// Interceptar callback del Cast SDK para ganar la carrera de inicialización
 window.__onGCastApiAvailable = (isAvailable) => {
     window.__castApiReady = isAvailable;
 };
 
-// Al inicio de main.js, asegurar que el SW se actualice
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', async () => {
         try {
-            const registration = await navigator.serviceWorker.register('/serviceWorker.js');
+            const registration = await navigator.serviceWorker.register('./serviceWorker.js');
             console.log('[SPTV] Service Worker registrado');
 
-            // Forzar actualización al cargar
             await registration.update();
 
-            // Escuchar cuando el nuevo ServiceWorker tome el control para recargar la página
             let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (!refreshing) {
@@ -29,31 +25,20 @@ if ('serviceWorker' in navigator) {
                 }
             });
 
-            // Función para mostrar el toast de actualización
             const showUpdatePrompt = (worker) => {
-                notifications.showUpdateToast(() => {
-                    // Le decimos al SW que se active
-                    worker.postMessage('SKIP_WAITING');
-                });
+                notifications.showUpdateToast(() => worker.postMessage('SKIP_WAITING'));
             };
 
-            // 1. Si hay un SW esperando (el usuario recargó la página sin actualizar)
-            if (registration.waiting) {
-                showUpdatePrompt(registration.waiting);
-            }
+            // SW en espera (recarga sin actualizar)
+            if (registration.waiting) showUpdatePrompt(registration.waiting);
 
-            // 2. Escuchar cambios de estado en nuevas actualizaciones (cuando la app está abierta)
+            // Nuevas actualizaciones
             registration.addEventListener('updatefound', () => {
                 const newWorker = registration.installing;
                 newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed') {
-                        if (navigator.serviceWorker.controller) {
-                            // Hay una actualización disponible
-                            console.log('[SPTV] Nueva versión del SW disponible, esperando confirmación');
-                            showUpdatePrompt(newWorker);
-                        } else {
-                            console.log('[SPTV] App lista para trabajar offline');
-                        }
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        console.log('[SPTV] Nueva versión del SW disponible');
+                        showUpdatePrompt(newWorker);
                     }
                 });
             });
@@ -124,20 +109,14 @@ class SPTVApp {
 
         console.log('[SPTV]', `Cambiando a: ${channel.name}`);
 
-        // Guardar en almacenamiento
         try {
-            localStorage.setItem('sptv_last', JSON.stringify({
-                name: channel.name,
-                timestamp: Date.now()
-            }));
+            localStorage.setItem('sptv_last', JSON.stringify({ name: channel.name, timestamp: Date.now() }));
         } catch (e) {
             console.warn('[SPTV]', 'No se pudo guardar último canal');
         }
 
-        // Actualizar UI del sidebar
         if (this.sidebar) this.sidebar.render(this.channels, index);
 
-        // Si estamos casteando, lo enviamos al Chromecast y marcamos éxito
         if (this.castManager && this.castManager.isCastAvailable) {
             const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
             if (castSession) {
@@ -149,12 +128,11 @@ class SPTVApp {
             }
         }
 
-        // Cargar canal localmente
         this.player.retryCount = 0;
         const success = await this.player.loadChannel(channel);
 
         console.log('[SPTV]', `Exito: ` + success);
-        
+
         if (success === 'aborted') {
             console.log('[SPTV]', 'Carga anterior abortada por cambio rápido de canal.');
             return;
@@ -204,23 +182,19 @@ class SPTVApp {
     }
 
     setupKeyboardNavigation() {
-        // Mapear eventos de teclado standard y de Smart TV remotes
         window.addEventListener('keydown', (e) => {
             const sidebar = document.getElementById('sidebarChannels');
             const isSidebarOpen = sidebar && sidebar.classList.contains('show');
 
-            // Si el sidebar está abierto, la navegación es manejada localmente por SidebarUI
             if (isSidebarOpen) return;
 
             switch (e.key) {
-                // Flecha Izquierda o Enter/OK abre la lista de canales
                 case 'ArrowLeft':
                 case 'Enter':
                     e.preventDefault();
                     if (this.sidebar) this.sidebar.open();
                     break;
 
-                // Flecha Arriba o ChannelUp hace zapping al canal anterior directamente
                 case 'ArrowUp':
                 case 'PageUp':
                 case 'ChannelUp':
@@ -229,7 +203,6 @@ class SPTVApp {
                     this._zapChannel(-1);
                     break;
 
-                // Flecha Abajo o ChannelDown hace zapping al canal siguiente directamente
                 case 'ArrowDown':
                 case 'PageDown':
                 case 'ChannelDown':
@@ -238,13 +211,10 @@ class SPTVApp {
                     this._zapChannel(1);
                     break;
 
-                // Flecha Derecha muestra información flotante del canal actual
                 case 'ArrowRight':
                     e.preventDefault();
                     const channel = this.channels[this.currentIndex];
-                    if (channel) {
-                        notifications.showInfo(`Reproduciendo: ${channel.name}`);
-                    }
+                    if (channel) notifications.showInfo(`Reproduciendo: ${channel.name}`);
                     break;
             }
         });
@@ -261,5 +231,4 @@ class SPTVApp {
     }
 }
 
-// Inicializar app
 new SPTVApp().init();

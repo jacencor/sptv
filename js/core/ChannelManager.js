@@ -24,7 +24,7 @@ export function parseM3U(content) {
             current = null;
         }
     }
-    
+
     console.log('[SPTV]', `${channels.length} canales limpios cargados`);
     return channels;
 }

@@ -17,7 +17,6 @@ export class PlayerManager {
         this.loadPromiseResolve = null;
         this.isCasting = false;
 
-        // Elementos UI para Cast
         this.castOverlay = document.getElementById('castOverlay');
         this.castChannelName = document.getElementById('castChannelName');
     }
@@ -29,14 +28,14 @@ export class PlayerManager {
         }
 
         this.currentChannel = channel;
-        this.retryCount = 0; // Reiniciar contador para el nuevo canal
+        this.retryCount = 0;
 
         this.video.poster = channel.img || 'img/app/error.png';
-        this.stopCurrentPlayback(); // Limpieza suave del buffer anterior y temporizadores
+        this.stopCurrentPlayback();
 
         return new Promise((resolve) => {
             if (this.loadPromiseResolve) {
-                this.loadPromiseResolve('aborted'); // Cancela la carga anterior limpiamente
+                this.loadPromiseResolve('aborted');
             }
             this.loadPromiseResolve = resolve;
 
@@ -47,27 +46,23 @@ export class PlayerManager {
 
                 console.log('[SPTV]', 'Usando reproductor HLS nativo');
 
-                // Limpieza previa: Abortamos eventos de canales anteriores
-                if (this.nativeAbortController) {
-                    this.nativeAbortController.abort();
-                }
-                // Creamos un nuevo controlador para este canal específico
+                if (this.nativeAbortController) this.nativeAbortController.abort();
+
                 this.nativeAbortController = new AbortController();
                 const { signal } = this.nativeAbortController;
 
                 this.video.src = channel.source;
 
-                // Timeout manual de 10 segundos (Evita el "Cuelgue Infinito" de Safari)
+                // Timeout manual (evita cuelgue infinito en Safari)
                 const nativeTimeout = setTimeout(() => {
                     console.warn('[SPTV]', 'Timeout nativo: Safari no pudo cargar el stream a tiempo.');
-                    this.nativeAbortController.abort(); // Matamos todos los listeners
+                    this.nativeAbortController.abort();
                     this._handleNativeError({ code: 0, message: 'Timeout: Servidor no responde' });
                     this.destroyAndResolve(false);
                 }, 10000);
 
-                // Evento de Éxito
                 this.video.addEventListener('loadedmetadata', () => {
-                    clearTimeout(nativeTimeout); // Cancelamos la guillotina del timeout
+                    clearTimeout(nativeTimeout);
 
                     this.video.play().catch(e => {
                         console.warn('[SPTV]', 'Autoplay nativo bloqueado. Requiere interacción:', e);
@@ -98,29 +93,25 @@ export class PlayerManager {
         if (!this.hls) {
             this.hls = new window.Hls({
                 enableWorker: true,
-                maxBufferLength: 30, // Aumentado para dar más margen al ABR
-                startLevel: -1, // ABR automático activado
-                capLevelToPlayerSize: true, // Optimización de ancho de banda basado en viewport
+                maxBufferLength: 30,
+                startLevel: -1,
+                capLevelToPlayerSize: true,
                 abrEwmaDefaultEstimate: 5e5,
-                // --- Ajustes para suavizar el ABR ---
-                abrBandWidthFactor: 0.9, // Da un 10% de margen antes de decidir bajar de calidad
-                abrBandWidthUpFactor: 0.7, // Es conservador al subir de calidad
-                abrEwmaFastLive: 5.0, // (Por defecto 3.0) Reacciona más lento a bajones repentinos de red
-                abrEwmaSlowLive: 9.0, // Ventana de promedio a largo plazo
-                liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
-                liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
-                maxMaxBufferLength: 60, // Aumentado a 60s (por defecto 30) para absorber inestabilidad
-                backBufferLength: 10, // Libera memoria de segmentos viejos
-                // Topes de reintentos para manifiestos (m3u8) y fragmentos (.ts)
+                abrBandWidthFactor: 0.9,
+                abrBandWidthUpFactor: 0.7,
+                abrEwmaFastLive: 5.0,
+                abrEwmaSlowLive: 9.0,
+                liveSyncDurationCount: 5,
+                liveMaxLatencyDurationCount: 10,
+                maxMaxBufferLength: 60,
+                backBufferLength: 10,
                 manifestLoadingMaxRetry: 3,
                 manifestLoadingRetryDelay: 1000,
                 levelLoadingMaxRetry: 3,
                 fragLoadingMaxRetry: 3,
                 fragLoadingRetryDelay: 1000,
-                // Tiempos máximos de espera (Timeout). Si un servidor no responde en 10s, abortar.
                 manifestLoadingTimeOut: 10000,
                 fragLoadingTimeOut: 10000,
-                // Evita que el reproductor intente buscar infinitamente un fragmento perdido
                 maxFragLookUpTolerance: 0.2,
                 abrMaxWithRealBitrate: true
             });
@@ -143,7 +134,7 @@ export class PlayerManager {
 
             this.hls.on(window.Hls.Events.ERROR, (event, data) => this._handleHlsError(data, this.currentChannel ? this.currentChannel.source : null));
         } else {
-            this.hls.stopLoad(); // Frenar descargas del canal viejo si se reutiliza
+            this.hls.stopLoad();
         }
 
         this.hls.loadSource(source);
@@ -212,11 +203,9 @@ export class PlayerManager {
         this.isCasting = isCasting;
 
         if (isCasting) {
-            // Pausar video local
             this.stopCurrentPlayback();
             if (this.video) this.video.pause();
 
-            // Mostrar Overlay
             if (this.castOverlay) {
                 this.castOverlay.classList.remove('d-none');
                 if (this.castChannelName) {
@@ -224,12 +213,10 @@ export class PlayerManager {
                 }
             }
         } else {
-            // Ocultar Overlay
             if (this.castOverlay) {
                 this.castOverlay.classList.add('d-none');
             }
 
-            // Si el usuario desconecta, recargamos el canal localmente
             if (this.currentChannel) {
                 this.loadChannel(this.currentChannel);
             }

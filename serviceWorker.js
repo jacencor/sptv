@@ -1,19 +1,23 @@
-const CACHE_NAME = 'sptv-v1.13';
+const CACHE_NAME = 'sptv-v1.15';
 const STATIC_ASSETS = [
-    '/',
-    '/index.html',
-    '/css/style.css',
-    '/manifest.json'
+    './',
+    './index.html',
+    './css/style.css',
+    './manifest.json',
+    './js/main.js',
+    './js/core/PlayerManager.js',
+    './js/core/ChannelManager.js',
+    './js/core/CastManager.js',
+    './js/ui/SidebarUI.js',
+    './js/ui/NotificationManager.js'
 ];
 
-// Permitir usar nuevo serviceWorker
 self.addEventListener('message', (event) => {
     if (event.data === 'SKIP_WAITING') {
         self.skipWaiting();
     }
 });
 
-// Activación del Service Worker
 self.addEventListener("activate", async (activateEvent) => {
     activateEvent.waitUntil(
         caches.keys()
@@ -42,49 +46,40 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
-    // No cachear streams HLS
-    if (url.pathname.endsWith('.m3u8') || url.pathname.includes('.ts')) {
+    const isMediaExt = /\.(m3u8|ts|aac|mp4|mkv|avi|mov|webm|mp3|m4a|m4v|vtt|key)$/i.test(url.pathname);
+    if (isMediaExt || event.request.destination === 'video' || event.request.destination === 'audio') {
         event.respondWith(fetch(event.request, { cache: 'no-store' }));
         return;
     }
 
-    // Network-first para el playlist M3U
+    // Network-first
     if (url.pathname.includes('play.m3u')) {
         event.respondWith(
             fetch(event.request)
                 .then(response => {
-                    // Actualiza el cache si la red funciona
                     const clonedResponse = response.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(event.request, clonedResponse));
                     return response;
                 })
-                .catch(() => {
-                    // Si falla la red, intenta usar el cache
-                    return caches.match(event.request);
-                })
+                .catch(() => caches.match(event.request))
         );
         return;
     }
 
-    // Estrategia Stale-While-Revalidate para el resto (estáticos, JS, CSS, CDNs)
+    // Stale-While-Revalidate
     event.respondWith(
         caches.match(event.request).then(cachedResponse => {
             const fetchPromise = fetch(event.request).then(networkResponse => {
-                // Si la respuesta es válida, actualizamos el cache
-                if (networkResponse && networkResponse.status === 200) {
+                // 'opaque' soporta logos cross-origin sin CORS
+                if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
                     const responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache)).catch(() => { });
                 }
                 return networkResponse;
             });
 
-            // Retornamos el cache rápido, o si no hay, esperamos la red
             return cachedResponse || fetchPromise.catch(() => {
-                if (event.request.mode === 'navigate') {
-                    // Si es una navegación (HTML) y falla, retornamos el index cached
-                    return caches.match('/index.html');
-                }
-                // Si falla una imagen o script y no hay cache, se devuelve un error genérico silencioso
+                if (event.request.mode === 'navigate') return caches.match('./index.html');
                 return Response.error();
             });
         })
