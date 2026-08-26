@@ -11,6 +11,11 @@
     <link rel="manifest" href="manifest.json">
     <title>SPTV - Simple TV</title>
 
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
@@ -35,8 +40,10 @@
         <button id="openSidebar"
             class="btn btn-dark position-absolute top-0 start-0 m-3 z-3 shadow-sm border border-secondary menu-btn"
             data-bs-toggle="offcanvas" data-bs-target="#sidebarChannels"
-            aria-label="Abrir menú de canales">
-            <i class="fa fa-bars"></i>
+            aria-label="Abrir menú de canales"
+            aria-controls="sidebarChannels"
+            aria-expanded="false">
+            <i class="fa fa-bars" aria-hidden="true"></i>
         </button>
 
         <!-- Cast Button -->

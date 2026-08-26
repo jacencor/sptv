@@ -4,9 +4,19 @@
 
 /* --- 1. Global Theme Overrides --- */
 :root {
-    --bs-font-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --bs-border-radius-lg: 0.75rem;
-    --sptv-transition: 0.2s ease;
+    --bs-font-sans-serif: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    
+    /* Geometría y Superficies (Soft UI) */
+    --bs-border-radius: 0.5rem;
+    --bs-border-radius-sm: 0.25rem;
+    --bs-border-radius-lg: 1rem;
+    --bs-border-radius-xl: 1.25rem;
+    --bs-border-radius-2xl: 1.5rem;
+    
+    /* Sombras globales Bootstrap */
+    --bs-box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
+    
+    --sptv-transition: 0.25s ease-in-out;
     --sptv-shadow-soft: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
     --sptv-glass-bg: rgba(15, 15, 15, 0.92);
     --sptv-glass-blur: blur(12px);
@@ -14,14 +24,31 @@
 
 [data-bs-theme="dark"] {
     --bs-body-bg: #000;
-    --bs-primary: #4d9fff;
-    --bs-primary-rgb: 77, 159, 255;
+    
+    /* Paleta de Colores Moderna (High Contrast) */
+    --bs-primary: #3b82f6;
+    --bs-primary-rgb: 59, 130, 246;
+    --bs-secondary: #64748b;
+    --bs-secondary-rgb: 100, 116, 139;
+    --bs-success: #10b981;
+    --bs-success-rgb: 16, 185, 129;
+    --bs-danger: #ef4444;
+    --bs-danger-rgb: 239, 68, 68;
+    --bs-warning: #f59e0b;
+    --bs-warning-rgb: 245, 158, 11;
+    --bs-info: #0ea5e9;
+    --bs-info-rgb: 14, 165, 233;
 }
 
 /* --- 2. Base --- */
 body {
     background-color: var(--bs-body-bg, #000);
     overflow: hidden;
+}
+
+/* Micro-interacciones Globales */
+a, .btn, .card {
+    transition: all var(--sptv-transition);
 }
 
 /* --- 3. Offcanvas / Sidebar (Glassmorphism) --- */
@@ -89,6 +116,8 @@ body {
     border-radius: var(--bs-border-radius-lg);
 }
 
+
+
 /* Close button — min click target SC 2.5.8 */
 .toast .btn-close {
     min-width: 44px;
@@ -139,14 +168,15 @@ body {
 /* --- 7. Accessibility (WCAG 2.1 AA) --- */
 
 /* SC 2.4.7 — Foco visible: anillo de 3px para navegación por teclado */
-:focus-visible {
-    outline: 3px solid var(--bs-primary, #4d9fff);
-    outline-offset: 2px;
+:focus-visible, .btn:focus-visible, .menu-btn:focus-visible {
+    outline: 3px solid var(--bs-primary) !important;
+    outline-offset: 3px !important;
+    box-shadow: none !important; /* Desactiva la sombra de bootstrap para diferenciarlo claramente del hover */
 }
 
 /* Quitar outline para clicks de ratón */
-:focus:not(:focus-visible) {
-    outline: none;
+:focus:not(:focus-visible), .btn:focus:not(:focus-visible) {
+    outline: none !important;
 }
 
 /* SC 2.3.3 — Movimiento reducido: desactivar transiciones y animaciones */

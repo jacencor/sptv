@@ -1,6 +1,5 @@
 class NotificationManager {
     constructor() {
-        this.loadingOverlay = document.getElementById('loadingOverlay');
         this.toastContainer = document.getElementById('toastContainer');
     }
 

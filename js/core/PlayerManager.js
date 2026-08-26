@@ -21,16 +21,21 @@ export class PlayerManager {
         }
 
         this.currentChannel = channel;
+        this.retryCount = 0; // Reiniciar contador para el nuevo canal
+
         this.video.poster = channel.img || 'img/app/error.png';
-        this.stopCurrentPlayback(); // Limpieza suave del buffer anterior
+        this.stopCurrentPlayback(); // Limpieza suave del buffer anterior y temporizadores
 
         return new Promise((resolve) => {
             if (this.loadPromiseResolve) {
-                this.loadPromiseResolve(false); // Cancela la carga anterior limpiamente
+                this.loadPromiseResolve('aborted'); // Cancela la carga anterior limpiamente
             }
             this.loadPromiseResolve = resolve;
 
-            if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
+            if (window.Hls && window.Hls.isSupported()) {
+                console.log('[SPTV]', 'Usando hls.js');
+                this.#initHlsJs(channel.source);
+            } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
 
                 console.log('[SPTV]', 'Usando reproductor HLS nativo');
 
@@ -77,9 +82,6 @@ export class PlayerManager {
                     console.warn('[SPTV]', 'El stream nativo se ha estancado (stalled).');
                 }, { signal });
 
-            } else if (window.Hls && window.Hls.isSupported()) {
-                console.log('[SPTV]', 'Usando hls.js');
-                this.#initHlsJs(channel.source);
             }
         });
     }
@@ -92,13 +94,11 @@ export class PlayerManager {
                 startLevel: -1, // ABR automático activado
                 capLevelToPlayerSize: true, // Optimización de ancho de banda basado en viewport
                 abrEwmaDefaultEstimate: 5e5,
-
                 // --- Ajustes para suavizar el ABR ---
                 abrBandWidthFactor: 0.9, // Da un 10% de margen antes de decidir bajar de calidad
                 abrBandWidthUpFactor: 0.7, // Es conservador al subir de calidad
                 abrEwmaFastLive: 5.0, // (Por defecto 3.0) Reacciona más lento a bajones repentinos de red
                 abrEwmaSlowLive: 9.0, // Ventana de promedio a largo plazo
-
                 liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
                 liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
                 maxMaxBufferLength: 60, // Aumentado a 60s (por defecto 30) para absorber inestabilidad
@@ -156,7 +156,7 @@ export class PlayerManager {
             switch (data.type) {
                 case window.Hls.ErrorTypes.NETWORK_ERROR:
                     this.notifications?.showWarning(`Red inestable (Intento ${this.retryCount}/${this.maxRetries}). Reconectando...`);
-                    setTimeout(() => {
+                    this.retryTimeout = setTimeout(() => {
                         if (this.hls) { this.hls.loadSource(source); this.hls.startLoad(); }
                     }, 2000);
                     break;
@@ -181,7 +181,7 @@ export class PlayerManager {
                 this.retryCount++;
                 if (this.retryCount >= this.maxRetries) {
                     this.hls.stopLoad();
-                    setTimeout(() => {
+                    this.retryTimeout = setTimeout(() => {
                         this.hls.startLoad();
                         if (this.video && (this.video.paused || this.video.readyState < 3)) {
                             this.video.currentTime += 0.1; // Nudge
@@ -252,6 +252,11 @@ export class PlayerManager {
     }
 
     stopCurrentPlayback() {
+        if (this.retryTimeout) {
+            clearTimeout(this.retryTimeout);
+            this.retryTimeout = null;
+        }
+
         if (this.hls) {
             this.hls.stopLoad();
             // No destruimos HLS ni removemos el src del video para evitar flasheos negros

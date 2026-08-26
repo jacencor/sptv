@@ -14,25 +14,13 @@ export function parseM3U(content) {
     const channels = [];
     let current = null;
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        
-        if (line.startsWith('#EXTINF:')) {
-            const lastCommaIndex = line.lastIndexOf(',');
-            const name = lastCommaIndex !== -1 ? line.substring(lastCommaIndex + 1).trim() : 'Canal Desconocido';
-            
-            const logoMatch = line.match(/tvg-logo="([^"]+)"/);
-            
-            current = {
-                name: name,
-                img: logoMatch ? logoMatch[1] : 'img/app/error.png',
-                source: ''
-            };
-        }
-        // Ignoramos directivas de VLC u otras metadatos
-        else if (line && !line.startsWith('#') && current) {
-            current.source = line;
-            channels.push(current);
+    for (const line of lines) {
+        const tLine = line.trim();
+        if (tLine.startsWith('#EXTINF:')) {
+            const [, logo] = tLine.match(/tvg-logo="([^"]+)"/) || [];
+            current = { name: tLine.split(',').pop().trim() || 'Canal', img: logo || 'img/app/error.png' };
+        } else if (tLine && !tLine.startsWith('#') && current) {
+            channels.push({ ...current, source: tLine });
             current = null;
         }
     }

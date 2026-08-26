@@ -2,52 +2,38 @@ export class SidebarUI {
     constructor(onChannelSelect) {
         this.container = document.getElementById('channels-group');
         this.onChannelSelect = onChannelSelect;
-        this.activeBtn = null;
+        
         const offcanvasElement = document.getElementById('sidebarChannels');
+        this.offcanvasInstance = offcanvasElement ? new bootstrap.Offcanvas(offcanvasElement) : null;
+        offcanvasElement?.addEventListener('shown.bs.offcanvas', () => this.focusActiveChannel());
 
-        if (offcanvasElement) {
-            this.offcanvasInstance = new bootstrap.Offcanvas(offcanvasElement);
-            
-            // Enfocar canal activo cuando se abre el menú (fundamental para Smart TV)
-            offcanvasElement.addEventListener('shown.bs.offcanvas', () => {
-                this.focusActiveChannel();
-            });
-        } else {
-            console.warn('[SPTV]', 'Offcanvas element or Bootstrap not found');
-        }
-
-        // Navegación por teclado/D-pad dentro del contenedor de canales
         if (this.container) {
+            // Event delegation para clicks
+            this.container.addEventListener('click', (e) => {
+                const btn = e.target.closest('button.list-group-item');
+                if (!btn) return;
+                const idx = parseInt(btn.dataset.index, 10);
+                if (!isNaN(idx)) {
+                    this.onChannelSelect(idx);
+                    this.close();
+                }
+            });
+
             this.container.addEventListener('keydown', (e) => {
                 const activeEl = document.activeElement;
                 if (!activeEl || activeEl.tagName !== 'BUTTON') return;
 
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    const next = activeEl.nextElementSibling;
-                    if (next) {
-                        next.focus();
-                        next.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                    }
+                    activeEl.nextElementSibling?.focus();
+                    activeEl.nextElementSibling?.scrollIntoView({ block: 'center', behavior: 'smooth' });
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    const prev = activeEl.previousElementSibling;
-                    if (prev) {
-                        prev.focus();
-                        prev.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                    }
-                } else if (
-                    e.key === 'ArrowRight' || 
-                    e.key === 'Escape' || 
-                    e.key === 'Backspace' || 
-                    e.keyCode === 461 || // LG webOS Back
-                    e.keyCode === 10009  // Samsung Tizen Back
-                ) {
+                    activeEl.previousElementSibling?.focus();
+                    activeEl.previousElementSibling?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                } else if (['ArrowRight', 'Backspace'].includes(e.key) || e.keyCode === 461 || e.keyCode === 10009) {
                     e.preventDefault();
                     this.close();
-                    // Devolver el foco al botón de abrir
-                    const openBtn = document.getElementById('openSidebar');
-                    if (openBtn) openBtn.focus();
                 }
             });
         }
@@ -55,71 +41,29 @@ export class SidebarUI {
 
     render(channels, currentIndex) {
         if (!this.container) return;
-        this.container.innerHTML = '';
-        this.activeBtn = null;
-
-        channels.forEach((channel, idx) => {
-            const btn = document.createElement('button');
-            btn.className = 'list-group-item list-group-item-action d-flex align-items-center gap-3 border-0';
-            btn.setAttribute('tabindex', '0');
-
-            // Agregar imagen si existe y no es externa problemática
-            if (channel.img && channel.img !== 'img/app/error.png') {
-                const img = document.createElement('img');
-                img.src = channel.img;
-                img.alt = channel.name;
-                img.className = 'channel-thumb';
-                img.referrerPolicy = 'no-referrer';
-
-                // Manejar errores de carga de imagen
-                img.onerror = () => {
-                    img.classList.add('d-none');
-                };
-
-                btn.appendChild(img);
-            }
-
-            const span = document.createElement('span');
-            span.textContent = channel.name;
-            btn.appendChild(span);
-
-            if (idx === currentIndex) {
-                btn.classList.add('channel-active');
-                this.activeBtn = btn;
-            }
-
-            btn.addEventListener('click', () => {
-                this.onChannelSelect(idx);
-                this.close();
-            });
-
-            this.container.appendChild(btn);
-        });
+        
+        this.container.innerHTML = channels.map((channel, idx) => {
+            const imgSrc = (channel.img && channel.img !== 'img/app/error.png') ? channel.img : '';
+            const imgHTML = imgSrc ? `<img src="${imgSrc}" alt="${channel.name}" class="channel-thumb" referrerpolicy="no-referrer" onerror="this.classList.add('d-none')">` : '';
+            const activeClass = (idx === currentIndex) ? 'channel-active' : '';
+            
+            return `<button class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0 ${activeClass}" tabindex="0" data-index="${idx}">
+                ${imgHTML}
+                <span>${channel.name}</span>
+            </button>`;
+        }).join('');
 
         console.log('[SPTV]', `Sidebar: ${channels.length} canales`);
     }
 
     focusActiveChannel() {
-        if (this.activeBtn) {
-            this.activeBtn.focus();
-            this.activeBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        } else {
-            const firstBtn = this.container?.querySelector('button');
-            if (firstBtn) firstBtn.focus();
+        const activeBtn = this.container?.querySelector('.channel-active') || this.container?.querySelector('button');
+        if (activeBtn) {
+            activeBtn.focus();
+            activeBtn.scrollIntoView({ block: 'center', behavior: 'smooth' });
         }
     }
 
-    open() {
-        if (this.offcanvasInstance) {
-            this.offcanvasInstance.show();
-        } else {
-            console.warn('[SPTV]', 'Offcanvas instancia no disponible');
-        }
-    }
-
-    close() {
-        if (this.offcanvasInstance) {
-            this.offcanvasInstance.hide();
-        }
-    }
+    open() { this.offcanvasInstance?.show(); }
+    close() { this.offcanvasInstance?.hide(); }
 }

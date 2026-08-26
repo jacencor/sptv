@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sptv-v1.6';
+const CACHE_NAME = 'sptv-v1.12';
 const STATIC_ASSETS = [
     '/',
     '/index.html',
@@ -73,20 +73,19 @@ self.addEventListener('fetch', event => {
                 // Si la respuesta es válida, actualizamos el cache
                 if (networkResponse && networkResponse.status === 200) {
                     const responseToCache = networkResponse.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache));
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, responseToCache)).catch(() => { });
                 }
                 return networkResponse;
-            }).catch(() => {
-                // Error de red, no hacemos nada extra aquí porque ya retornamos el cache si existe
             });
 
             // Retornamos el cache rápido, o si no hay, esperamos la red
-            return cachedResponse || fetchPromise.then(response => {
-                if (!response && event.request.mode === 'navigate') {
+            return cachedResponse || fetchPromise.catch(() => {
+                if (event.request.mode === 'navigate') {
                     // Si es una navegación (HTML) y falla, retornamos el index cached
                     return caches.match('/index.html');
                 }
-                return response;
+                // Si falla una imagen o script y no hay cache, se devuelve un error genérico silencioso
+                return Response.error();
             });
         })
     );

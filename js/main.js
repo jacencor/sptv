@@ -119,19 +119,6 @@ class SPTVApp {
     }
 
     async changeChannel(index) {
-        // Evitar cambios simultáneos
-        if (this.isChangingChannel) {
-            notifications.showWarning('Ya estamos cambiando de canal, espera...');
-            console.warn('[SPTV]', 'Ya cambiando canal, ignorando');
-            return;
-        }
-
-        if (index === this.currentIndex && this.player?.hls) {
-            notifications.showInfo('Ya estás viendo este canal');
-            console.log('[SPTV]', 'Ya en este canal');
-            return;
-        }
-
         this.isChangingChannel = true;
         this.currentIndex = index;
         const channel = this.channels[this.currentIndex];
@@ -142,9 +129,6 @@ class SPTVApp {
         try {
             localStorage.setItem('sptv_last', JSON.stringify({
                 name: channel.name,
-                url: channel.source,
-                poster: channel.img,
-                index: index,
                 timestamp: Date.now()
             }));
         } catch (e) {
@@ -175,12 +159,16 @@ class SPTVApp {
         this.player.retryCount = 0;
         const success = await this.player.loadChannel(channel);
 
-        console.log('[SPTV]', `Exito: `+success);
+        console.log('[SPTV]', `Exito: ` + success);
+        
+        if (success === 'aborted') {
+            console.log('[SPTV]', 'Carga anterior abortada por cambio rápido de canal.');
+            return;
+        }
+
         if (success) {
             notifications.showSuccess(`▶️ ${channel.name}`, 2000);
-            if (this.sidebar) {
-                this.sidebar.close();
-            }
+            this.sidebar?.close();
         } else if (index + 1 < this.channels.length) {
             notifications.showError(`❌ Falló ${channel.name}, cambiando al siguiente...`);
             console.warn('[SPTV]', `Falló ${channel.name}, intentando siguiente...`);
@@ -191,9 +179,8 @@ class SPTVApp {
             notifications.showError('No hay más canales disponibles');
             notifications.showError(`❌ Falló ${channel.name}, volviendo al inicio...`);
             console.warn('[SPTV]', `Falló ${channel.name}, volviendo al inicio...`);
-            index = 0;
             setTimeout(() => {
-                this.changeChannel(index);
+                this.changeChannel(0);
             }, 2000);
         }
 
@@ -284,8 +271,4 @@ class SPTVApp {
 }
 
 // Inicializar app
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => new SPTVApp().init());
-} else {
-    new SPTVApp().init();
-}
+new SPTVApp().init();
