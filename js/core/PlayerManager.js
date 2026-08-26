@@ -1,7 +1,6 @@
 export class PlayerManager {
-    constructor(videoElement, networkMonitor, notifications) {
+    constructor(videoElement, notifications) {
         this.video = videoElement;
-        this.networkMonitor = networkMonitor;
         this.notifications = notifications;
         this.hls = null;
         this.currentChannel = null;
@@ -9,7 +8,7 @@ export class PlayerManager {
         this.maxRetries = 3;
         this.loadPromiseResolve = null;
         this.isCasting = false;
-        
+
         // Elementos UI para Cast
         this.castOverlay = document.getElementById('castOverlay');
         this.castChannelName = document.getElementById('castChannelName');
@@ -87,17 +86,22 @@ export class PlayerManager {
 
     #initHlsJs(source) {
         if (!this.hls) {
-            const bufferConfig = this.networkMonitor ? this.networkMonitor.getBufferConfig() : { maxBuffer: 20, startLevel: -1 };
-
             this.hls = new window.Hls({
                 enableWorker: true,
-                maxBufferLength: bufferConfig.maxBuffer,
-                startLevel: bufferConfig.startLevel, // ABR automático activado
+                maxBufferLength: 30, // Aumentado para dar más margen al ABR
+                startLevel: -1, // ABR automático activado
                 capLevelToPlayerSize: true, // Optimización de ancho de banda basado en viewport
                 abrEwmaDefaultEstimate: 5e5,
+
+                // --- Ajustes para suavizar el ABR ---
+                abrBandWidthFactor: 0.9, // Da un 10% de margen antes de decidir bajar de calidad
+                abrBandWidthUpFactor: 0.7, // Es conservador al subir de calidad
+                abrEwmaFastLive: 5.0, // (Por defecto 3.0) Reacciona más lento a bajones repentinos de red
+                abrEwmaSlowLive: 9.0, // Ventana de promedio a largo plazo
+
                 liveSyncDurationCount: 5, // Mantener solo 2 fragmentos de sincronización
                 liveMaxLatencyDurationCount: 10, // Si se retrasa mucho, salta al vivo de nuevo
-                maxMaxBufferLength: 30,
+                maxMaxBufferLength: 60, // Aumentado a 60s (por defecto 30) para absorber inestabilidad
                 backBufferLength: 10, // Libera memoria de segmentos viejos
                 // Topes de reintentos para manifiestos (m3u8) y fragmentos (.ts)
                 manifestLoadingMaxRetry: 3,
@@ -221,12 +225,12 @@ export class PlayerManager {
 
     setCastMode(isCasting, channelName = '') {
         this.isCasting = isCasting;
-        
+
         if (isCasting) {
             // Pausar video local
             this.stopCurrentPlayback();
             if (this.video) this.video.pause();
-            
+
             // Mostrar Overlay
             if (this.castOverlay) {
                 this.castOverlay.classList.remove('d-none');
@@ -239,7 +243,7 @@ export class PlayerManager {
             if (this.castOverlay) {
                 this.castOverlay.classList.add('d-none');
             }
-            
+
             // Si el usuario desconecta, recargamos el canal localmente
             if (this.currentChannel) {
                 this.loadChannel(this.currentChannel);

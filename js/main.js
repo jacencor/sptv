@@ -1,4 +1,3 @@
-import { NetworkMonitor } from './utils/NetworkMonitor.js';
 import { loadChannels } from './core/ChannelManager.js';
 import { PlayerManager } from './core/PlayerManager.js';
 import { SidebarUI } from './ui/SidebarUI.js';
@@ -69,7 +68,6 @@ class SPTVApp {
     constructor() {
         this.channels = [];
         this.currentIndex = 0;
-        this.networkMonitor = new NetworkMonitor();
         this.player = null;
         this.sidebar = null;
         this.castManager = null;
@@ -78,8 +76,6 @@ class SPTVApp {
 
     async init() {
         console.log('[SPTV]', 'Iniciando SPTV...');
-
-        this.networkMonitor.start();
 
         this.channels = await loadChannels('/data/play.m3u');
 
@@ -90,7 +86,7 @@ class SPTVApp {
         }
 
         const videoEl = document.getElementById('video');
-        this.player = new PlayerManager(videoEl, this.networkMonitor, notifications);
+        this.player = new PlayerManager(videoEl, notifications);
 
         this.castManager = new CastManager((isConnected, channel) => {
             if (this.player) {
@@ -211,35 +207,19 @@ class SPTVApp {
 
         const resetIdleTimer = () => {
             if (!menuBtn) return;
-
-            // 1. Mostrar el botón inmediatamente
             menuBtn.classList.remove('menu-btn--idle');
-
-            // 2. Limpiar el temporizador anterior
             clearTimeout(idleTimeout);
-
-            // 3. Iniciar un nuevo temporizador
             idleTimeout = setTimeout(() => {
-                // Verificar si el menú de Bootstrap NO está abierto
                 const sidebar = document.getElementById('sidebarChannels');
-                const isSidebarOpen = sidebar && sidebar.classList.contains('show');
-
-                // Ocultar solo si el sidebar está cerrado
-                if (!isSidebarOpen) {
+                if (!(sidebar && sidebar.classList.contains('show'))) {
                     menuBtn.classList.add('menu-btn--idle');
                 }
             }, idleTime);
         };
 
-        // Escuchar eventos de interacción (ratón, táctil, teclado) en toda la ventana
-        // Usamos { passive: true } para optimizar el rendimiento del scroll/touch
-        // Delegación de eventos optimizada
-        const activeEvents = ['mousemove', 'mousedown', 'keydown'];
-        const passiveEvents = ['touchstart', 'touchmove', 'wheel'];
-
-        activeEvents.forEach(evt => window.addEventListener(evt, resetIdleTimer));
-        passiveEvents.forEach(evt => window.addEventListener(evt, resetIdleTimer, { passive: true }));
-        // Disparar la primera vez para iniciar el ciclo
+        window.addEventListener('mousemove', resetIdleTimer);
+        window.addEventListener('touchstart', resetIdleTimer, { passive: true });
+        window.addEventListener('keydown', resetIdleTimer);
         resetIdleTimer();
     }
 
