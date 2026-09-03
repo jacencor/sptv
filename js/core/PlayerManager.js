@@ -1,4 +1,15 @@
-// Mapa de errores nativos HTMLMediaError (Safari/iOS)
+// @ts-check
+
+/** @import { Channel } from './ChannelManager.js' */
+/** @import { INotifications } from '../ui/NotificationManager.js' */
+
+/**
+ * @typedef {Object} NativeError
+ * @property {number} code
+ * @property {string} [message]
+ */
+
+/** @type {Record<number, string>} Mapa de errores nativos HTMLMediaError (Safari/iOS) */
 const NATIVE_ERRORS = {
     1: 'La carga del canal fue cancelada.',
     2: 'Se perdió la conexión con el servidor de origen.',
@@ -7,22 +18,52 @@ const NATIVE_ERRORS = {
 };
 
 export class PlayerManager {
+    /**
+     * @param {HTMLVideoElement} videoElement
+     * @param {INotifications | null} notifications
+     */
     constructor(videoElement, notifications) {
+        /** @type {HTMLVideoElement} */
         this.video = videoElement;
         this.notifications = notifications;
+
+        /** @type {HlsInstance | null} */
         this.hls = null;
+
+        /** @type {Channel | null} */
         this.currentChannel = null;
+
+        /** @type {number} */
         this.retryCount = 0;
+
+        /** @type {number} */
         this.maxRetries = 3;
+
+        /** @type {((value: boolean | 'aborted') => void) | null} */
         this.loadPromiseResolve = null;
+
+        /** @type {boolean} */
         this.isCasting = false;
-        this.nativeTimeout = null;       // timeout de carga nativa (Safari)
-        this.nativeAbortController = null; // AbortController de listeners nativos
+
+        /** @type {ReturnType<typeof setTimeout> | null} timeout de carga nativa (Safari) */
+        this.nativeTimeout = null;
+
+        /** @type {AbortController | null} AbortController de listeners nativos */
+        this.nativeAbortController = null;
+
+        /** @type {ReturnType<typeof setTimeout> | null} */
+        this.retryTimeout = null;
 
         this.castOverlay = document.getElementById('castOverlay');
         this.castChannelName = document.getElementById('castChannelName');
     }
 
+    /**
+     * Carga y reproduce un canal. Devuelve `true` si tuvo éxito, `false` si falló
+     * definitivamente, o `'aborted'` si fue interrumpido por una carga posterior.
+     * @param {Channel} channel
+     * @returns {Promise<boolean | 'aborted'>}
+     */
     async loadChannel(channel) {
         if (!channel || !channel.source) {
             console.error('[SPTV]', 'Intento de carga de canal inválido');
@@ -93,6 +134,11 @@ export class PlayerManager {
         });
     }
 
+    /**
+     * Inicializa o reutiliza la instancia de hls.js y carga el source indicado.
+     * @param {string} source - URL del manifest HLS
+     * @returns {void}
+     */
     _initHlsJs(source) {
         if (!this.hls) {
             this.hls = new window.Hls({
@@ -127,7 +173,7 @@ export class PlayerManager {
             });
 
             this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                this.video.play().catch(e => {
+                this.video.play().catch(() => {
                     console.warn('[SPTV]', 'Auto-play bloqueado por el navegador. Requiere interacción.');
                 });
                 if (this.loadPromiseResolve) {
@@ -136,7 +182,9 @@ export class PlayerManager {
                 }
             });
 
-            this.hls.on(window.Hls.Events.ERROR, (event, data) => this._handleHlsError(data, this.currentChannel ? this.currentChannel.source : null));
+            this.hls.on(window.Hls.Events.ERROR, (event, data) =>
+                this._handleHlsError(data, this.currentChannel ? this.currentChannel.source : null)
+            );
         } else {
             this.hls.stopLoad();
         }
@@ -144,6 +192,12 @@ export class PlayerManager {
         this.hls.loadSource(source);
     }
 
+    /**
+     * Maneja errores reportados por hls.js, con reintentos para errores recuperables.
+     * @param {HlsErrorData} data
+     * @param {string | null} source - URL del stream activo para reconexión
+     * @returns {void}
+     */
     _handleHlsError(data, source) {
         if (data.fatal) {
             console.error('[SPTV]', `Error fatal HLS: ${data.type} - ${data.details}`);
@@ -160,7 +214,7 @@ export class PlayerManager {
                 case window.Hls.ErrorTypes.NETWORK_ERROR:
                     if (this.notifications) this.notifications.showWarning(`Red inestable (Intento ${this.retryCount}/${this.maxRetries}). Reconectando...`);
                     this.retryTimeout = setTimeout(() => {
-                        if (this.hls) { this.hls.loadSource(source); this.hls.startLoad(); }
+                        if (this.hls && source) { this.hls.loadSource(source); this.hls.startLoad(); }
                     }, 2000);
                     break;
                 case window.Hls.ErrorTypes.MEDIA_ERROR:
@@ -194,15 +248,28 @@ export class PlayerManager {
         }
     }
 
+    /**
+     * Maneja errores del reproductor nativo del navegador (Safari/iOS).
+     * @param {NativeError | MediaError | null} error
+     * @returns {void}
+     */
     _handleNativeError(error) {
-        var code = error ? error.code : null;
-        var msg = (code === 0 && error.message)
+        const code = error ? error.code : null;
+        const msg = (code === 0 && error && 'message' in error && error.message)
             ? error.message
-            : NATIVE_ERRORS[code] || 'Error crítico al reproducir la señal.';
+            : (code !== null ? NATIVE_ERRORS[code] : null) || 'Error crítico al reproducir la señal.';
         console.error('[SPTV]', `[Nativo] ${msg}`);
         if (this.notifications) this.notifications.showError(`Señal perdida: ${msg}`);
     }
 
+    /**
+     * Activa o desactiva el modo Chromecast.
+     * Cuando se activa, detiene la reproducción local y muestra el overlay.
+     * Cuando se desactiva, reanuda el canal actual en el video local.
+     * @param {boolean} isCasting
+     * @param {string} [channelName]
+     * @returns {void}
+     */
     setCastMode(isCasting, channelName = '') {
         this.isCasting = isCasting;
 
@@ -227,6 +294,11 @@ export class PlayerManager {
         }
     }
 
+    /**
+     * Detiene la carga activa (hls.js y nativa) limpiando timers y listeners,
+     * sin destruir la instancia HLS para evitar flasheos negros en el zapping.
+     * @returns {void}
+     */
     stopCurrentPlayback() {
         if (this.retryTimeout) {
             clearTimeout(this.retryTimeout);
@@ -250,6 +322,12 @@ export class PlayerManager {
         }
     }
 
+    /**
+     * Destruye completamente la instancia HLS (en fallos fatales) y resuelve
+     * la promesa de carga pendiente con el resultado indicado.
+     * @param {boolean} success
+     * @returns {void}
+     */
     destroyAndResolve(success) {
         // En fallos fatales destruimos la instancia HLS por completo para que
         // sus listeners de ERROR no se disparen sobre la siguiente carga.

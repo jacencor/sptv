@@ -1,16 +1,38 @@
+// @ts-check
+
+/**
+ * @typedef {'danger' | 'warning' | 'success' | 'info' | 'update'} ToastType
+ */
+
 class NotificationManager {
     constructor() {
+        /** @type {HTMLElement | null} */
         this.toastContainer = document.getElementById('toastContainer');
     }
 
+    /**
+     * Crea y muestra un toast Bootstrap con el estilo y duración indicados.
+     * @param {string} message
+     * @param {ToastType} [type='danger']
+     * @param {number} [duration=4000] - Duración en milisegundos antes de ocultarse
+     * @returns {void}
+     */
     showToast(message, type = 'danger', duration = 4000) {
         if (!this.toastContainer) return;
 
-        const isDark = ['danger', 'success', 'update'].includes(type);
-        const icon = { danger: 'fa-circle-exclamation', warning: 'fa-triangle-exclamation', success: 'fa-check-circle', info: 'fa-circle-info' }[type] || 'fa-bell';
+        const isDark = /** @type {ToastType[]} */ (['danger', 'success', 'update']).includes(type);
+        /** @type {Record<string, string>} */
+        const icons = {
+            danger: 'fa-circle-exclamation',
+            warning: 'fa-triangle-exclamation',
+            success: 'fa-check-circle',
+            info: 'fa-circle-info',
+        };
+        const icon = icons[type] || 'fa-bell';
+        const ariaLive = (type === 'danger' || type === 'warning') ? 'assertive' : 'polite';
 
         const html = `
-            <div class="toast align-items-center toast-${type} border-0" role="alert" aria-live="${type === 'danger' || type === 'warning' ? 'assertive' : 'polite'}" aria-atomic="true" data-bs-autohide="true" data-bs-delay="${duration}">
+            <div class="toast align-items-center toast-${type} border-0" role="alert" aria-live="${ariaLive}" aria-atomic="true" data-bs-autohide="true" data-bs-delay="${duration}">
                 <div class="d-flex">
                     <div class="toast-body"><i class="fas ${icon} me-2"></i> ${message}</div>
                     <button type="button" class="btn-close ${isDark ? 'btn-close-white' : ''} me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
@@ -18,7 +40,7 @@ class NotificationManager {
             </div>`;
 
         this.toastContainer.insertAdjacentHTML('beforeend', html);
-        const toastEl = this.toastContainer.lastElementChild;
+        const toastEl = /** @type {HTMLElement} */ (this.toastContainer.lastElementChild);
 
         try {
             new bootstrap.Toast(toastEl, { animation: true, autohide: true, delay: duration }).show();
@@ -28,6 +50,12 @@ class NotificationManager {
         }
     }
 
+    /**
+     * Muestra un toast especial de actualización de PWA (no se auto-oculta).
+     * Llama a `onUpdateCallback` cuando el usuario confirma la actualización.
+     * @param {() => void} onUpdateCallback
+     * @returns {void}
+     */
     showUpdateToast(onUpdateCallback) {
         if (!this.toastContainer) return;
 
@@ -44,11 +72,13 @@ class NotificationManager {
             </div>`;
 
         this.toastContainer.insertAdjacentHTML('beforeend', html);
-        const toastEl = this.toastContainer.lastElementChild;
+        const toastEl = /** @type {HTMLElement} */ (this.toastContainer.lastElementChild);
 
-        toastEl.querySelector('.btnUpdatePwa').addEventListener('click', (e) => {
-            e.target.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Actualizando...';
-            e.target.disabled = true;
+        const updateBtn = /** @type {HTMLButtonElement} */ (toastEl.querySelector('.btnUpdatePwa'));
+        updateBtn.addEventListener('click', (e) => {
+            const btn = /** @type {HTMLButtonElement} */ (e.target);
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Actualizando...';
+            btn.disabled = true;
             onUpdateCallback();
         });
 
@@ -60,10 +90,18 @@ class NotificationManager {
         }
     }
 
+    /** @param {string} msg @returns {void} */
     showError(msg) { console.error('[SPTV]', msg); this.showToast(msg, 'danger'); }
+
+    /** @param {string} msg @returns {void} */
     showInfo(msg) { console.log('[SPTV]', msg); this.showToast(msg, 'info'); }
+
+    /** @param {string} msg @returns {void} */
     showWarning(msg) { console.warn('[SPTV]', msg); this.showToast(msg, 'warning'); }
-    showSuccess(msg) { this.showToast(msg, 'success'); }
+
+    /** @param {string} msg @param {number} [duration] @returns {void} */
+    showSuccess(msg, duration) { this.showToast(msg, 'success', duration); }
 }
 
+/** @typedef {NotificationManager} INotifications */
 export const notifications = new NotificationManager();

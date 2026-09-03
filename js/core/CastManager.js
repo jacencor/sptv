@@ -1,9 +1,21 @@
+// @ts-check
+
+/** @import { Channel } from './ChannelManager.js' */
 import { notifications } from '../ui/NotificationManager.js';
 
 export class CastManager {
+    /**
+     * @param {(isConnected: boolean, channel: Channel | null) => void} onStateChange
+     * Callback invocado cuando cambia el estado de la sesión de Chromecast.
+     */
     constructor(onStateChange) {
-        this.onStateChange = onStateChange; // (isConnected, channelName) => {}
+        /** @type {(isConnected: boolean, channel: Channel | null) => void} */
+        this.onStateChange = onStateChange;
+
+        /** @type {boolean} Indica si la API de Cast está inicializada y disponible */
         this.isCastAvailable = false;
+
+        /** @type {Channel | null} Canal que se está transmitiendo actualmente */
         this.currentChannel = null;
 
         // Toma el control del callback (reemplaza el interceptor temporal de main.js).
@@ -19,6 +31,11 @@ export class CastManager {
         }
     }
 
+    /**
+     * Configura el contexto de Cast y suscribe el listener de cambios de sesión.
+     * Solo debe llamarse una vez que `window.cast` esté disponible.
+     * @returns {void}
+     */
     _initializeCastApi() {
         const castContext = cast.framework.CastContext.getInstance();
 
@@ -34,7 +51,8 @@ export class CastManager {
         castContext.addEventListener(
             cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
             (event) => {
-                const isConnected = event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
+                const isConnected =
+                    event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
                     event.sessionState === cast.framework.SessionState.SESSION_RESUMED;
 
                 if (isConnected && this.currentChannel) {
@@ -52,6 +70,11 @@ export class CastManager {
         );
     }
 
+    /**
+     * Envía un canal a reproducir en el dispositivo Chromecast activo.
+     * @param {Channel} channel
+     * @returns {boolean} `true` si se envió la solicitud, `false` si no hay sesión activa.
+     */
     castChannel(channel) {
         this.currentChannel = channel;
 
