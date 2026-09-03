@@ -6,10 +6,14 @@ export class CastManager {
         this.isCastAvailable = false;
         this.currentChannel = null;
 
+        // Toma el control del callback (reemplaza el interceptor temporal de main.js).
+        // También actualiza __castApiReady para que el flag quede siempre sincronizado.
         window.__onGCastApiAvailable = (isAvailable) => {
+            window.__castApiReady = isAvailable;
             if (isAvailable) this._initializeCastApi();
         };
 
+        // El SDK ya disparó el callback antes de que CastManager fuera instanciado
         if (window.__castApiReady) {
             this._initializeCastApi();
         }

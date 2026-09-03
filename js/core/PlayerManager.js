@@ -16,6 +16,8 @@ export class PlayerManager {
         this.maxRetries = 3;
         this.loadPromiseResolve = null;
         this.isCasting = false;
+        this.nativeTimeout = null;       // timeout de carga nativa (Safari)
+        this.nativeAbortController = null; // AbortController de listeners nativos
 
         this.castOverlay = document.getElementById('castOverlay');
         this.castChannelName = document.getElementById('castChannelName');
@@ -54,15 +56,16 @@ export class PlayerManager {
                 this.video.src = channel.source;
 
                 // Timeout manual (evita cuelgue infinito en Safari)
-                const nativeTimeout = setTimeout(() => {
+                // Se almacena en this para poder limpiarlo desde stopCurrentPlayback
+                this.nativeTimeout = setTimeout(() => {
                     console.warn('[SPTV]', 'Timeout nativo: Safari no pudo cargar el stream a tiempo.');
-                    this.nativeAbortController.abort();
                     this._handleNativeError({ code: 0, message: 'Timeout: Servidor no responde' });
                     this.destroyAndResolve(false);
                 }, 10000);
 
                 this.video.addEventListener('loadedmetadata', () => {
-                    clearTimeout(nativeTimeout);
+                    clearTimeout(this.nativeTimeout);
+                    this.nativeTimeout = null;
 
                     this.video.play().catch(e => {
                         console.warn('[SPTV]', 'Autoplay nativo bloqueado. Requiere interacción:', e);
@@ -71,7 +74,8 @@ export class PlayerManager {
                 }, { signal });
 
                 this.video.addEventListener('error', () => {
-                    clearTimeout(nativeTimeout);
+                    clearTimeout(this.nativeTimeout);
+                    this.nativeTimeout = null;
                     const err = this.video.error;
                     this._handleNativeError(err);
                     this.destroyAndResolve(false);
@@ -229,15 +233,30 @@ export class PlayerManager {
             this.retryTimeout = null;
         }
 
+        // Limpiar timeout y listeners nativos (Safari/iOS)
+        if (this.nativeTimeout) {
+            clearTimeout(this.nativeTimeout);
+            this.nativeTimeout = null;
+        }
+        if (this.nativeAbortController) {
+            this.nativeAbortController.abort();
+            this.nativeAbortController = null;
+        }
+
         if (this.hls) {
             this.hls.stopLoad();
-            // No destruimos HLS ni removemos el src del video para evitar flasheos negros
+            // No destruimos HLS al hacer zapping para evitar flasheos negros;
+            // la instancia se reutiliza con loadSource().
         }
-        // Para nativo (Safari), no quitamos el src explícitamente al hacer zapping 
-        // para que la transición sea más suave.
     }
 
     destroyAndResolve(success) {
+        // En fallos fatales destruimos la instancia HLS por completo para que
+        // sus listeners de ERROR no se disparen sobre la siguiente carga.
+        if (this.hls) {
+            this.hls.destroy();
+            this.hls = null;
+        }
         this.stopCurrentPlayback();
         if (this.loadPromiseResolve) {
             this.loadPromiseResolve(success);
