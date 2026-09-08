@@ -31,10 +31,15 @@ class NotificationManager {
         const icon = icons[type] || 'fa-bell';
         const ariaLive = (type === 'danger' || type === 'warning') ? 'assertive' : 'polite';
 
+        const escapeHTML = (/** @type {string} */ str) => str.replace(/[&<>'"]/g, tag => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+        }[tag] || tag));
+        const safeMessage = escapeHTML(message);
+
         const html = `
             <div class="toast align-items-center toast-${type} border-0" role="alert" aria-live="${ariaLive}" aria-atomic="true" data-bs-autohide="true" data-bs-delay="${duration}">
                 <div class="d-flex">
-                    <div class="toast-body"><i class="fas ${icon} me-2"></i> ${message}</div>
+                    <div class="toast-body"><i class="fas ${icon} me-2"></i> ${safeMessage}</div>
                     <button type="button" class="btn-close ${isDark ? 'btn-close-white' : ''} me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
                 </div>
             </div>`;
@@ -75,7 +80,7 @@ class NotificationManager {
         const toastEl = /** @type {HTMLElement} */ (this.toastContainer.lastElementChild);
 
         const updateBtn = /** @type {HTMLButtonElement} */ (toastEl.querySelector('.btnUpdatePwa'));
-        updateBtn.addEventListener('click', (e) => {
+        updateBtn.addEventListener('click', /** @param {MouseEvent} e */ (e) => {
             const btn = /** @type {HTMLButtonElement} */ (e.target);
             btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Actualizando...';
             btn.disabled = true;

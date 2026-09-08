@@ -70,6 +70,9 @@ class SPTVApp {
 
         /** @type {CastManager | null} */
         this.castManager = null;
+        
+        /** @type {ReturnType<typeof setTimeout> | undefined} */
+        this.zapTimeout = undefined;
     }
 
     /**
@@ -115,24 +118,65 @@ class SPTVApp {
         } catch (e) { /* ignorar errores de localStorage */ }
 
         this.sidebar.render(this.channels, startIndex);
-        await this.changeChannel(startIndex);
+        await this.changeChannel(startIndex, true);
         this.setupIdleTimer();
         this.setupKeyboardNavigation();
+        this.setupPiP();
 
         console.log('[SPTV]', 'SPTV listo');
+    }
+
+    /**
+     * Configura el botón y eventos de Picture-in-Picture si el navegador lo soporta.
+     * @returns {void}
+     */
+    setupPiP() {
+        const video = /** @type {HTMLVideoElement | null} */ (document.getElementById('video'));
+        const pipBtn = document.getElementById('pipBtn');
+
+        // Document.pictureInPictureEnabled verifica si el navegador/dispositivo soporta PiP
+        // Algunos navegadores requieren @ts-ignore o cast explícito debido a que no está en la lib por defecto.
+        if (video && pipBtn && 'pictureInPictureEnabled' in document && document.pictureInPictureEnabled) {
+            pipBtn.classList.remove('d-none');
+
+            pipBtn.addEventListener('click', /** @param {MouseEvent} e */ async (e) => {
+                try {
+                    if (document.pictureInPictureElement) {
+                        await document.exitPictureInPicture();
+                    } else if (video.readyState >= 1) { // Necesita metadata cargada al menos
+                        // Cast para evitar errores de TS si requestPictureInPicture no está declarado en ES2022 DOM lib
+                        await (/** @type {any} */ (video)).requestPictureInPicture();
+                    }
+                } catch (error) {
+                    console.error('[SPTV] Error al usar Picture-in-Picture:', error);
+                }
+            });
+
+            video.addEventListener('enterpictureinpicture', () => {
+                pipBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+                pipBtn.setAttribute('aria-expanded', 'true');
+            });
+
+            video.addEventListener('leavepictureinpicture', () => {
+                pipBtn.innerHTML = '<i class="fa-solid fa-clone"></i>';
+                pipBtn.setAttribute('aria-expanded', 'false');
+            });
+        }
     }
 
     /**
      * Cambia al canal en el índice indicado. Si Chromecast está activo, envía
      * el canal a la TV. Si falla, intenta el siguiente o vuelve al primero.
      * @param {number} index
+     * @param {boolean} immediate - Si es true, ignora el debounce
      * @returns {Promise<void>}
      */
-    async changeChannel(index) {
+    async changeChannel(index, immediate = false) {
         this.currentIndex = index;
         const channel = this.channels[this.currentIndex];
 
-        console.log('[SPTV]', `Cambiando a: ${channel.name}`);
+        // 1. Actualización visual instantánea
+        if (this.sidebar) this.sidebar.render(this.channels, index);
 
         try {
             localStorage.setItem('sptv_last', JSON.stringify({ name: channel.name, timestamp: Date.now() }));
@@ -140,43 +184,55 @@ class SPTVApp {
             console.warn('[SPTV]', 'No se pudo guardar último canal');
         }
 
-        if (this.sidebar) this.sidebar.render(this.channels, index);
+        // 2. Debounce para lógica pesada (Chromecast/HLS)
+        if (this.zapTimeout) clearTimeout(this.zapTimeout);
+        
+        const applyChange = async () => {
+            console.log('[SPTV]', `Cambiando a: ${channel.name}`);
+            
+            if (this.castManager && this.castManager.isCastAvailable) {
+                const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
+                if (castSession) {
+                    this.castManager.castChannel(channel);
+                    this.player?.setCastMode(true, channel.name);
+                    notifications.showSuccess(`▶️ (TV) ${channel.name}`, 2000);
+                    if (this.sidebar) this.sidebar.close();
+                    return;
+                }
+            }
 
-        if (this.castManager && this.castManager.isCastAvailable) {
-            const castSession = cast.framework.CastContext.getInstance().getCurrentSession();
-            if (castSession) {
-                this.castManager.castChannel(channel);
-                this.player?.setCastMode(true, channel.name);
-                notifications.showSuccess(`▶️ (TV) ${channel.name}`, 2000);
-                if (this.sidebar) this.sidebar.close();
+            if (!this.player) return;
+
+            this.player.retryCount = 0;
+            const success = await this.player.loadChannel(channel);
+
+            console.log('[SPTV]', `Exito: ` + success);
+
+            if (success === 'aborted') {
+                console.log('[SPTV]', 'Carga anterior abortada por cambio rápido de canal.');
                 return;
             }
-        }
 
-        if (!this.player) return;
+            if (success) {
+                notifications.showSuccess(`▶️ ${channel.name}`, 2000);
+                if (this.sidebar) this.sidebar.close();
+            } else if (this.currentIndex + 1 < this.channels.length) {
+                notifications.showError(`❌ Falló ${channel.name}, cambiando al siguiente...`);
+                console.warn('[SPTV]', `Falló ${channel.name}, intentando siguiente...`);
+                // Zapping automático si falla sin debounce visual
+                setTimeout(() => { this.changeChannel(this.currentIndex + 1, true); }, 2000);
+            } else {
+                notifications.showError('No hay más canales disponibles');
+                notifications.showError(`❌ Falló ${channel.name}, volviendo al inicio...`);
+                console.warn('[SPTV]', `Falló ${channel.name}, volviendo al inicio...`);
+                setTimeout(() => { this.changeChannel(0, true); }, 2000);
+            }
+        };
 
-        this.player.retryCount = 0;
-        const success = await this.player.loadChannel(channel);
-
-        console.log('[SPTV]', `Exito: ` + success);
-
-        if (success === 'aborted') {
-            console.log('[SPTV]', 'Carga anterior abortada por cambio rápido de canal.');
-            return;
-        }
-
-        if (success) {
-            notifications.showSuccess(`▶️ ${channel.name}`, 2000);
-            if (this.sidebar) this.sidebar.close();
-        } else if (index + 1 < this.channels.length) {
-            notifications.showError(`❌ Falló ${channel.name}, cambiando al siguiente...`);
-            console.warn('[SPTV]', `Falló ${channel.name}, intentando siguiente...`);
-            setTimeout(() => { this.changeChannel(index + 1); }, 2000);
+        if (immediate) {
+            applyChange();
         } else {
-            notifications.showError('No hay más canales disponibles');
-            notifications.showError(`❌ Falló ${channel.name}, volviendo al inicio...`);
-            console.warn('[SPTV]', `Falló ${channel.name}, volviendo al inicio...`);
-            setTimeout(() => { this.changeChannel(0); }, 2000);
+            this.zapTimeout = setTimeout(applyChange, 400); // 400ms debounce
         }
     }
 
@@ -185,19 +241,19 @@ class SPTVApp {
      * @returns {void}
      */
     setupIdleTimer() {
-        /** @type {ReturnType<typeof setTimeout> | null} */
-        let idleTimeout = null;
-        const menuBtn = document.getElementById('openSidebar');
+        /** @type {ReturnType<typeof setTimeout> | undefined} */
+        let idleTimeout = undefined;
         const idleTime = 3500; // ms de inactividad antes de ocultar
 
         const resetIdleTimer = () => {
-            if (!menuBtn) return;
-            menuBtn.classList.remove('menu-btn--idle');
+            const controls = document.querySelectorAll('#openSidebar, #overlayActions');
+            controls.forEach(el => el.classList.remove('menu-btn--idle'));
+            
             if (idleTimeout) clearTimeout(idleTimeout);
             idleTimeout = setTimeout(() => {
                 const sidebar = document.getElementById('sidebarChannels');
                 if (!(sidebar && sidebar.classList.contains('show'))) {
-                    menuBtn.classList.add('menu-btn--idle');
+                    controls.forEach(el => el.classList.add('menu-btn--idle'));
                 }
             }, idleTime);
         };
@@ -214,7 +270,7 @@ class SPTVApp {
      * @returns {void}
      */
     setupKeyboardNavigation() {
-        window.addEventListener('keydown', (e) => {
+        window.addEventListener('keydown', /** @param {KeyboardEvent} e */ (e) => {
             const sidebar = document.getElementById('sidebarChannels');
             const isSidebarOpen = sidebar && sidebar.classList.contains('show');
 

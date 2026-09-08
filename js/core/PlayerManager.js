@@ -45,14 +45,14 @@ export class PlayerManager {
         /** @type {boolean} */
         this.isCasting = false;
 
-        /** @type {ReturnType<typeof setTimeout> | null} timeout de carga nativa (Safari) */
-        this.nativeTimeout = null;
+        /** @type {ReturnType<typeof setTimeout> | undefined} timeout de carga nativa (Safari) */
+        this.nativeTimeout = undefined;
 
         /** @type {AbortController | null} AbortController de listeners nativos */
         this.nativeAbortController = null;
 
-        /** @type {ReturnType<typeof setTimeout> | null} */
-        this.retryTimeout = null;
+        /** @type {ReturnType<typeof setTimeout> | undefined} */
+        this.retryTimeout = undefined;
 
         this.castOverlay = document.getElementById('castOverlay');
         this.castChannelName = document.getElementById('castChannelName');
@@ -106,9 +106,9 @@ export class PlayerManager {
 
                 this.video.addEventListener('loadedmetadata', () => {
                     clearTimeout(this.nativeTimeout);
-                    this.nativeTimeout = null;
+                    this.nativeTimeout = undefined;
 
-                    this.video.play().catch(e => {
+                    this.video.play().catch(/** @param {Error} e */ e => {
                         console.warn('[SPTV]', 'Autoplay nativo bloqueado. Requiere interacción:', e);
                     });
                     resolve(true);
@@ -116,7 +116,7 @@ export class PlayerManager {
 
                 this.video.addEventListener('error', () => {
                     clearTimeout(this.nativeTimeout);
-                    this.nativeTimeout = null;
+                    this.nativeTimeout = undefined;
                     const err = this.video.error;
                     this._handleNativeError(err);
                     this.destroyAndResolve(false);
@@ -140,8 +140,11 @@ export class PlayerManager {
      * @returns {void}
      */
     _initHlsJs(source) {
+        const Hls = window.Hls;
+        if (!Hls) return;
+
         if (!this.hls) {
-            this.hls = new window.Hls({
+            this.hls = new Hls({
                 enableWorker: true,
                 maxBufferLength: 30,
                 startLevel: -1,
@@ -168,12 +171,12 @@ export class PlayerManager {
 
             this.hls.attachMedia(this.video);
 
-            this.hls.on(window.Hls.Events.MEDIA_ATTACHED, () => {
+            this.hls.on(Hls.Events.MEDIA_ATTACHED, () => {
                 console.log('[SPTV]', 'HLS Media attached');
             });
 
-            this.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                this.video.play().catch(() => {
+            this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                this.video.play().catch(/** @param {Error} e */ e => {
                     console.warn('[SPTV]', 'Auto-play bloqueado por el navegador. Requiere interacción.');
                 });
                 if (this.loadPromiseResolve) {
@@ -182,7 +185,7 @@ export class PlayerManager {
                 }
             });
 
-            this.hls.on(window.Hls.Events.ERROR, (event, data) =>
+            this.hls.on(Hls.Events.ERROR, /** @param {string} event @param {HlsErrorData} data */ (event, data) =>
                 this._handleHlsError(data, this.currentChannel ? this.currentChannel.source : null)
             );
         } else {
@@ -199,6 +202,9 @@ export class PlayerManager {
      * @returns {void}
      */
     _handleHlsError(data, source) {
+        const Hls = window.Hls;
+        if (!Hls) return;
+
         if (data.fatal) {
             console.error('[SPTV]', `Error fatal HLS: ${data.type} - ${data.details}`);
             this.retryCount++;
@@ -211,15 +217,15 @@ export class PlayerManager {
             }
 
             switch (data.type) {
-                case window.Hls.ErrorTypes.NETWORK_ERROR:
+                case Hls.ErrorTypes.NETWORK_ERROR:
                     if (this.notifications) this.notifications.showWarning(`Red inestable (Intento ${this.retryCount}/${this.maxRetries}). Reconectando...`);
                     this.retryTimeout = setTimeout(() => {
                         if (this.hls && source) { this.hls.loadSource(source); this.hls.startLoad(); }
                     }, 2000);
                     break;
-                case window.Hls.ErrorTypes.MEDIA_ERROR:
+                case Hls.ErrorTypes.MEDIA_ERROR:
                     if (this.notifications) this.notifications.showWarning(`Fallo de video (Intento ${this.retryCount}/${this.maxRetries}). Limpiando buffer...`);
-                    this.hls.recoverMediaError();
+                    if (this.hls) this.hls.recoverMediaError();
                     break;
                 default:
                     if (this.notifications) this.notifications.showError('Error crítico reproduciendo el canal.');
@@ -234,10 +240,10 @@ export class PlayerManager {
 
             if (data.details === 'fragLoadTimeOut' || data.details === 'levelLoadTimeOut') {
                 this.retryCount++;
-                if (this.retryCount >= this.maxRetries) {
+                if (this.retryCount >= this.maxRetries && this.hls) {
                     this.hls.stopLoad();
                     this.retryTimeout = setTimeout(() => {
-                        this.hls.startLoad();
+                        if (this.hls) this.hls.startLoad();
                         if (this.video && (this.video.paused || this.video.readyState < 3)) {
                             this.video.currentTime += 0.1;
                         }
@@ -302,13 +308,13 @@ export class PlayerManager {
     stopCurrentPlayback() {
         if (this.retryTimeout) {
             clearTimeout(this.retryTimeout);
-            this.retryTimeout = null;
+            this.retryTimeout = undefined;
         }
 
         // Limpiar timeout y listeners nativos (Safari/iOS)
         if (this.nativeTimeout) {
             clearTimeout(this.nativeTimeout);
-            this.nativeTimeout = null;
+            this.nativeTimeout = undefined;
         }
         if (this.nativeAbortController) {
             this.nativeAbortController.abort();

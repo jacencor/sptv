@@ -50,6 +50,7 @@ export class CastManager {
 
         castContext.addEventListener(
             cast.framework.CastContextEventType.SESSION_STATE_CHANGED,
+            /** @param {any} event */
             (event) => {
                 const isConnected =
                     event.sessionState === cast.framework.SessionState.SESSION_STARTED ||
@@ -102,6 +103,7 @@ export class CastManager {
                 console.log('[SPTV]', 'Carga en Chromecast exitosa');
                 notifications.showSuccess(`Enviado a TV: ${channel.name}`);
             },
+            /** @param {Error} error */
             (error) => {
                 console.error('[SPTV]', 'Error enviando a Chromecast:', error);
                 notifications.showError('Fallo al transmitir a la TV');

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sptv-v1.15';
+const CACHE_NAME = 'sptv-v1.17';
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -12,13 +12,13 @@ const STATIC_ASSETS = [
     './js/ui/NotificationManager.js'
 ];
 
-self.addEventListener('message', (event) => {
+self.addEventListener('message', /** @param {ExtendableMessageEvent} event */ (event) => {
     if (event.data === 'SKIP_WAITING') {
         self.skipWaiting();
     }
 });
 
-self.addEventListener("activate", async (activateEvent) => {
+self.addEventListener("activate", /** @param {ExtendableEvent} activateEvent */ async (activateEvent) => {
     activateEvent.waitUntil(
         caches.keys()
             .then(function (cacheNames) {
@@ -36,14 +36,14 @@ self.addEventListener("activate", async (activateEvent) => {
     );
 });
 
-self.addEventListener('install', event => {
+self.addEventListener('install', /** @param {ExtendableEvent} event */ event => {
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
     );
     // Para actualizaciones manuales, no llamamos a self.skipWaiting() aquí
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
     const url = new URL(event.request.url);
 
     const isMediaExt = /\.(m3u8|ts|aac|mp4|mkv|avi|mov|webm|mp3|m4a|m4v|vtt|key)$/i.test(url.pathname);
@@ -52,17 +52,9 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Network-first
-    if (url.pathname.includes('play.m3u')) {
-        event.respondWith(
-            fetch(event.request)
-                .then(response => {
-                    const clonedResponse = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clonedResponse));
-                    return response;
-                })
-                .catch(() => caches.match(event.request))
-        );
+    // Bypass: ChannelManager maneja su propio caché Stale-While-Revalidate para listas M3U
+    if (url.pathname.includes('.m3u')) {
+        event.respondWith(fetch(event.request));
         return;
     }
 
