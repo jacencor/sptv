@@ -29,6 +29,7 @@ MEJORES_TVG_IDS = [
     
     # COLOMBIA
     "RCNMas.co",
+    "RCNNovelas.co",
     
     # MÉXICO
     "LasEstrellas.mx",
