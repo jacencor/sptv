@@ -18,7 +18,7 @@
     
     --sptv-transition: 0.25s ease-in-out;
     --sptv-shadow-soft: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
-    --sptv-glass-bg: rgba(15, 15, 15, 0.92);
+    --sptv-glass-bg: #121212;
     --sptv-glass-blur: blur(12px);
 }
 
@@ -28,8 +28,8 @@
     /* Paleta de Colores Moderna (High Contrast) */
     --bs-primary: #3b82f6;
     --bs-primary-rgb: 59, 130, 246;
-    --bs-secondary: #64748b;
-    --bs-secondary-rgb: 100, 116, 139;
+    --bs-secondary: #94a3b8;
+    --bs-secondary-rgb: 148, 163, 184;
     --bs-success: #10b981;
     --bs-success-rgb: 16, 185, 129;
     --bs-danger: #ef4444;
@@ -53,24 +53,44 @@ a, .btn, .card {
 
 /* --- 3. Offcanvas / Sidebar (Glassmorphism) --- */
 .offcanvas {
-    background-color: var(--sptv-glass-bg) !important;
+    background-color: var(--sptv-glass-bg, #121212) !important;
     backdrop-filter: var(--sptv-glass-blur);
     -webkit-backdrop-filter: var(--sptv-glass-blur);
     box-shadow: var(--sptv-shadow-soft);
 }
 
+.offcanvas-header {
+    background-color: var(--sptv-glass-bg, #121212);
+    border-bottom: 1px solid var(--bs-secondary, #94a3b8) !important;
+}
+
 /* Sidebar channel items — Soft UI hover */
 .list-group-item {
-    transition: background-color var(--sptv-transition);
+    background-color: var(--sptv-glass-bg, #121212);
+    transition: background-color var(--sptv-transition), color var(--sptv-transition);
+    color: #f8fafc;
 }
 
 .list-group-item:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
 }
 
 .channel-active {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-    font-weight: bold;
+    background-color: rgba(59, 130, 246, 0.22) !important;
+    box-shadow: inset 4px 0 0 0 #60a5fa !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.channel-active::after {
+    content: "▶";
+    margin-left: auto;
+    margin-right: 0.75rem;
+    color: #60a5fa;
+    font-size: 0.875rem;
+    font-weight: 700;
+    flex-shrink: 0;
 }
 
 .channel-thumb {
@@ -79,29 +99,49 @@ a, .btn, .card {
     object-fit: contain;
 }
 
+.channel-thumb.bg-secondary {
+    background-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
 /* --- 4. Menu Button (min 44×44px para accesibilidad SC 2.5.8) --- */
 .menu-btn {
     min-width: 44px;
     min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: opacity var(--sptv-transition), box-shadow var(--sptv-transition);
 }
 
 .menu-btn:hover {
-    box-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0.75rem rgba(255, 255, 255, 0.2);
 }
 
 .menu-btn--idle {
-    opacity: 0;
-    pointer-events: none;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Permitir que vuelvan a ser visibles si reciben el foco repentinamente (por teclado) */
+.menu-btn--idle:focus-visible,
+.menu-btn--idle:focus-within {
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 
 /* --- 5. Cast --- */
 .cast-launcher {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    --connected-color: white;
-    --disconnected-color: rgba(255, 255, 255, 0.7);
+    --connected-color: #ffffff;
+    --disconnected-color: #94a3b8;
 }
 
 .cast-icon {
@@ -118,10 +158,14 @@ a, .btn, .card {
 
 
 
-/* Close button — min click target SC 2.5.8 */
-.toast .btn-close {
+/* Close button — min click target 44×44px SC 2.5.8 */
+.btn-close {
     min-width: 44px;
     min-height: 44px;
+    padding: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Update toast buttons — min click target SC 2.5.8 */
@@ -167,27 +211,85 @@ a, .btn, .card {
 
 /* --- 7. Accessibility (WCAG 2.1 AA) --- */
 
-/* SC 2.4.7 — Foco visible: anillo de 3px para navegación por teclado */
-:focus-visible, .btn:focus-visible, .menu-btn:focus-visible {
-    outline: 3px solid var(--bs-primary) !important;
+/* SC 2.4.7 — High-Contrast Visible Focus Ring (>= 3px, >= 3:1 contrast) */
+:focus-visible,
+.btn:focus-visible,
+.menu-btn:focus-visible {
+    outline: 3px solid #60a5fa !important;
     outline-offset: 3px !important;
-    box-shadow: none !important; /* Desactiva la sombra de bootstrap para diferenciarlo claramente del hover */
+    box-shadow: 0 0 0 1px #000000 !important;
 }
 
-/* Quitar outline para clicks de ratón */
-:focus:not(:focus-visible), .btn:focus:not(:focus-visible) {
+/* Inward outline for channel buttons in virtual scrolling list */
+.list-group-item:focus-visible {
+    outline: 3px solid #60a5fa !important;
+    outline-offset: -3px !important;
+    box-shadow: none !important;
+}
+
+/* Quitar outline para clicks de ratón / puntero */
+:focus:not(:focus-visible),
+.btn:focus:not(:focus-visible),
+.list-group-item:focus:not(:focus-visible) {
     outline: none !important;
+    box-shadow: none !important;
 }
 
-/* SC 2.3.3 — Movimiento reducido: desactivar transiciones y animaciones */
+/* High Contrast / Forced Colors Mode */
+@media (forced-colors: active) {
+    :focus-visible,
+    .btn:focus-visible,
+    .menu-btn:focus-visible,
+    .list-group-item:focus-visible {
+        outline: 3px solid Highlight !important;
+    }
+    .channel-active {
+        border-left: 4px solid Highlight !important;
+    }
+    .channel-active::after {
+        color: Highlight !important;
+    }
+}
+
+/* SC 2.2.2 / SC 2.3.3 — Prefers-Reduced-Motion */
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
     *::after {
-        transition-duration: 0.01ms !important;
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
+    .fa-spin {
+        animation: none !important;
+    }
+}
+
+/* --- Skip Link (SC 2.4.1 Bypass Blocks) --- */
+.skip-link {
+    position: absolute;
+    top: -100px;
+    left: 1rem;
+    z-index: 1050;
+    padding: 0.625rem 1.25rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    background-color: #2563eb;
+    color: #ffffff !important;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--bs-border-radius);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: top var(--sptv-transition);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+    top: 1rem;
+    outline: 3px solid #ffffff !important;
+    outline-offset: 3px !important;
 }
 
 /* --- 8. Scrollbar discreto --- */

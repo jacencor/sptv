@@ -32,11 +32,17 @@ export class SidebarUI {
 
         if (offcanvasElement) {
             offcanvasElement.addEventListener('shown.bs.offcanvas', () => this.focusActiveChannel());
+            // Restaurar foco al botón disparador al cerrar (SC 2.4.3 Focus Order)
+            offcanvasElement.addEventListener('hidden.bs.offcanvas', () => {
+                const trigger = document.getElementById('openSidebar');
+                if (trigger) trigger.focus();
+            });
         }
 
         if (this.scrollContainer && this.container) {
             this.container.style.position = 'relative';
             this.container.setAttribute('role', 'listbox');
+            this.container.setAttribute('aria-label', 'Lista de canales');
 
             // Optimización: Virtual Scrolling
             this.scrollContainer.addEventListener('scroll', () => {
@@ -45,23 +51,29 @@ export class SidebarUI {
 
             // Delegación de click
             this.container.addEventListener('click', /** @param {MouseEvent} e */ (e) => {
-                const btn = /** @type {HTMLElement | null} */ (/** @type {Element} */ (e.target).closest('button.list-group-item'));
-                if (!btn) return;
-                const idx = parseInt(btn.dataset.index ?? '', 10);
+                const item = /** @type {HTMLElement | null} */ (/** @type {Element} */ (e.target).closest('[role="option"]'));
+                if (!item) return;
+                const idx = parseInt(item.dataset.index ?? '', 10);
                 if (!isNaN(idx)) {
                     this.onChannelSelect(idx);
                     this.close();
                 }
             });
 
-            // Navegación por teclado (Smart TV / Accesibilidad - Roving Tabindex pattern)
+            // Navegación por teclado (WAI-ARIA Listbox Pattern & Smart TV)
             this.container.addEventListener('keydown', /** @param {KeyboardEvent} e */ (e) => {
                 const activeEl = /** @type {HTMLElement} */ (document.activeElement);
-                if (!activeEl || activeEl.tagName !== 'BUTTON') return;
+                if (!activeEl || activeEl.getAttribute('role') !== 'option') return;
 
                 const currentIdx = parseInt(activeEl.dataset.index ?? '', 10);
 
-                if (e.key === 'ArrowDown') {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (!isNaN(currentIdx)) {
+                        this.onChannelSelect(currentIdx);
+                        this.close();
+                    }
+                } else if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     this._focusIndex(currentIdx + 1);
                 } else if (e.key === 'ArrowUp') {
@@ -89,8 +101,8 @@ export class SidebarUI {
         
         // Esperar el re-render por scroll
         setTimeout(() => {
-            const btn = /** @type {HTMLElement | null} */ (this.container?.querySelector(`button[data-index="${index}"]`));
-            if (btn) btn.focus();
+            const item = /** @type {HTMLElement | null} */ (this.container?.querySelector(`[data-index="${index}"]`));
+            if (item) item.focus();
         }, 10);
     }
 
@@ -144,17 +156,17 @@ export class SidebarUI {
             
             const imgHTML = safeImg
                 ? `<img src="${safeImg}" loading="lazy" alt="" class="channel-thumb rounded" referrerpolicy="no-referrer" onerror="this.classList.add('d-none')">`
-                : `<div class="channel-thumb rounded bg-secondary d-flex justify-content-center align-items-center text-light"><i class="fas fa-tv"></i></div>`;
+                : `<div class="channel-thumb rounded bg-secondary d-flex justify-content-center align-items-center text-light"><i class="fas fa-tv" aria-hidden="true"></i></div>`;
             
             const isActive = (i === this.currentIndex);
             const activeClass = isActive ? 'channel-active' : '';
             const ariaSelected = isActive ? 'aria-selected="true"' : 'aria-selected="false"';
             const tabIndex = isActive ? '0' : '-1';
 
-            html += `<button role="option" ${ariaSelected} class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0 ${activeClass}" tabindex="${tabIndex}" data-index="${i}" style="position: absolute; top: ${i * this.itemHeight}px; width: 100%; height: ${this.itemHeight}px; outline-offset: -2px;">
+            html += `<div role="option" id="channel-opt-${i}" ${ariaSelected} class="list-group-item list-group-item-action d-flex align-items-center gap-3 border-0 ${activeClass}" tabindex="${tabIndex}" data-index="${i}" style="position: absolute; top: ${i * this.itemHeight}px; width: 100%; height: ${this.itemHeight}px; outline-offset: -2px; cursor: pointer;">
                 ${imgHTML}
                 <span class="text-truncate fw-medium">${safeName}</span>
-            </button>`;
+            </div>`;
         }
         
         this.container.innerHTML = html;
@@ -171,7 +183,7 @@ export class SidebarUI {
             currentActive.setAttribute('tabindex', '-1');
         }
 
-        const newActive = this.container.querySelector(`button[data-index="${this.currentIndex}"]`);
+        const newActive = this.container.querySelector(`[data-index="${this.currentIndex}"]`);
         if (newActive) {
             newActive.classList.add('channel-active');
             newActive.setAttribute('aria-selected', 'true');
@@ -180,7 +192,7 @@ export class SidebarUI {
     }
 
     /**
-     * Mueve el foco al botón del canal activo (o al primero).
+     * Mueve el foco al elemento del canal activo (o al primero).
      * @returns {void}
      */
     focusActiveChannel() {
@@ -190,7 +202,7 @@ export class SidebarUI {
         
         setTimeout(() => {
             const activeBtn = /** @type {HTMLElement | null} */ (
-                this.container?.querySelector('.channel-active') ?? this.container?.querySelector('button')
+                this.container?.querySelector('.channel-active') ?? this.container?.querySelector('[role="option"]')
             );
             if (activeBtn) {
                 activeBtn.focus();

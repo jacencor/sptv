@@ -1,0 +1,26 @@
+{
+  "name": "sptv",
+  "version": "1.0.0",
+  "description": "SPTV Web IPTV Player - WCAG 2.1 Level AA Compliant",
+  "main": "index.html",
+  "scripts": {
+    "test": "node scripts/audit.js",
+    "audit": "node scripts/audit.js"
+  },
+  "keywords": [
+    "iptv",
+    "web-player",
+    "accessibility",
+    "wcag21aa",
+    "a11y",
+    "axe-core",
+    "pa11y"
+  ],
+  "author": "SPTV Contributors",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "axe-core": "^4.10.2",
+    "pa11y": "^10.0.0"
+  }
+}

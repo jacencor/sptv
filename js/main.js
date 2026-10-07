@@ -153,12 +153,12 @@ class SPTVApp {
             });
 
             video.addEventListener('enterpictureinpicture', () => {
-                pipBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+                pipBtn.innerHTML = '<i class="fa-solid fa-compress" aria-hidden="true"></i>';
                 pipBtn.setAttribute('aria-expanded', 'true');
             });
 
             video.addEventListener('leavepictureinpicture', () => {
-                pipBtn.innerHTML = '<i class="fa-solid fa-clone"></i>';
+                pipBtn.innerHTML = '<i class="fa-solid fa-clone" aria-hidden="true"></i>';
                 pipBtn.setAttribute('aria-expanded', 'false');
             });
         }
@@ -237,7 +237,8 @@ class SPTVApp {
     }
 
     /**
-     * Oculta el botón de menú tras 3.5 s de inactividad del usuario.
+     * Oculta los controles tras 3.5 s de inactividad del usuario,
+     * pero respeta el foco del teclado para evitar ocultar controles activos (SC 2.4.7).
      * @returns {void}
      */
     setupIdleTimer() {
@@ -252,7 +253,17 @@ class SPTVApp {
             if (idleTimeout) clearTimeout(idleTimeout);
             idleTimeout = setTimeout(() => {
                 const sidebar = document.getElementById('sidebarChannels');
-                if (!(sidebar && sidebar.classList.contains('show'))) {
+                const isSidebarOpen = sidebar && sidebar.classList.contains('show');
+                const openSidebarBtn = document.getElementById('openSidebar');
+                const overlayActions = document.getElementById('overlayActions');
+                
+                // No ocultar controles si alguno de ellos tiene el foco del teclado activo
+                const isControlFocused = document.activeElement && (
+                    openSidebarBtn?.contains(document.activeElement) ||
+                    overlayActions?.contains(document.activeElement)
+                );
+
+                if (!isSidebarOpen && !isControlFocused) {
                     controls.forEach(el => el.classList.add('menu-btn--idle'));
                 }
             }, idleTime);
@@ -266,7 +277,8 @@ class SPTVApp {
 
     /**
      * Configura navegación por teclado global (flechas, PageUp/Down, teclas de TV).
-     * Solo actúa cuando el sidebar está cerrado.
+     * Solo actúa cuando el sidebar está cerrado y el usuario no está interactuando
+     * con controles interactivos enfocados (botones, enlaces, video, inputs).
      * @returns {void}
      */
     setupKeyboardNavigation() {
@@ -275,6 +287,20 @@ class SPTVApp {
             const isSidebarOpen = sidebar && sidebar.classList.contains('show');
 
             if (isSidebarOpen) return;
+
+            // SC 2.1.1 & SC 2.1.2: No secuestrar teclas de navegación ni Enter si el foco
+            // está sobre un control interactivo (botones de UI, controles de video, enlaces, etc.)
+            const activeEl = document.activeElement;
+            const isInteractive = activeEl && (
+                ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA', 'VIDEO'].includes(activeEl.tagName) ||
+                activeEl.closest('video') !== null ||
+                activeEl.closest('google-cast-launcher') !== null ||
+                activeEl.getAttribute('role') === 'button' ||
+                activeEl.getAttribute('role') === 'link' ||
+                activeEl.isContentEditable
+            );
+
+            if (isInteractive) return;
 
             switch (e.key) {
                 case 'ArrowLeft':
